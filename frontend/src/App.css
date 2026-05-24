@@ -1,0 +1,11 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Space Grotesk', monospace;
+  background-color: #F8F4E8;
+  color: #09090B;
+}

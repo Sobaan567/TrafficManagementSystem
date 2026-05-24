@@ -1,0 +1,238 @@
+.reports-page {
+  background: #F8F4E8;
+  color: #09090B;
+  min-height: calc(100vh - 100px);
+  padding: 34px 20px 80px;
+}
+
+.reports-hero,
+.reports-card-grid,
+.reports-main-grid {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1200px;
+}
+
+.reports-hero {
+  align-items: flex-start;
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.1) 1px, transparent 1px),
+    #09090B;
+  background-size: 28px 28px;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 7px 7px 0 #D2E823;
+  color: #F8F4E8;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 26px;
+  padding: clamp(26px, 5vw, 50px);
+}
+
+.reports-hero span {
+  background: #D2E823;
+  color: #09090B;
+  display: inline-block;
+  font-weight: 900;
+  margin-bottom: 16px;
+  padding: 7px 12px;
+  text-transform: uppercase;
+}
+
+.reports-hero h1 {
+  color: #F8F4E8;
+  font-size: clamp(2.6rem, 8vw, 5.5rem);
+  line-height: 0.9;
+  margin: 0 0 12px;
+}
+
+.reports-hero p {
+  color: #d8d3c4;
+  font-weight: 800;
+  margin: 0;
+  max-width: 650px;
+}
+
+.reports-hero a {
+  background: #D2E823;
+  border: 2px solid #F8F4E8;
+  border-radius: 8px;
+  color: #09090B;
+  font-weight: 900;
+  padding: 12px 16px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.reports-card-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 24px;
+}
+
+.reports-card-grid article,
+.reports-panel {
+  background: #fff;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #09090B;
+}
+
+.reports-card-grid article {
+  padding: 18px;
+}
+
+.reports-card-grid span,
+.reports-card-grid small {
+  display: block;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.reports-card-grid strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1;
+  margin: 10px 0;
+}
+
+.reports-card-grid small {
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 999px;
+  display: inline-block;
+  padding: 4px 9px;
+}
+
+.reports-card-grid p {
+  color: #555;
+  font-weight: 800;
+  margin: 12px 0 0;
+}
+
+.reports-main-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+}
+
+.reports-panel {
+  padding: 22px;
+}
+
+.reports-panel-heading h2 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  margin: 0 0 6px;
+}
+
+.reports-panel-heading p {
+  color: #555;
+  font-weight: 800;
+  margin: 0 0 20px;
+}
+
+.report-lanes {
+  display: grid;
+  gap: 16px;
+}
+
+.report-lane {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 110px minmax(0, 1fr) 60px;
+  align-items: center;
+  font-weight: 900;
+}
+
+.report-lane div {
+  background: #09090B;
+  border: 2px solid #09090B;
+  border-radius: 999px;
+  height: 22px;
+  overflow: hidden;
+}
+
+.report-lane i {
+  background: #2ECC40;
+  display: block;
+  height: 100%;
+}
+
+.report-lane.warn i {
+  background: #FF851B;
+}
+
+.report-lane.danger i {
+  background: #FF3B3B;
+}
+
+.report-queue {
+  display: grid;
+  gap: 12px;
+}
+
+.report-queue article {
+  align-items: center;
+  background: #F8F4E8;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  padding: 12px;
+}
+
+.report-queue article > span {
+  align-items: center;
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 50%;
+  display: flex;
+  font-weight: 900;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.report-queue p {
+  font-weight: 900;
+  margin: 0;
+}
+
+.report-queue button {
+  background: #09090B;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  color: #F8F4E8;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 920px) {
+  .reports-hero {
+    flex-direction: column;
+  }
+
+  .reports-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .reports-card-grid,
+  .report-lane,
+  .report-queue article {
+    grid-template-columns: 1fr;
+  }
+}

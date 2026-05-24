@@ -1,0 +1,108 @@
+/* ============================================================================
+   3D TRAFFIC SCENE - COMPONENT STYLING
+   ============================================================================ */
+
+.traffic-scene-3d {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  background: #09090b;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: var(--border-size) solid var(--color-primary);
+  box-shadow: 0 0 0 2px #d2e823 inset, 8px 8px 0 #09090b;
+}
+
+.traffic-scene-3d canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ============================================================================
+   SCENE INFO OVERLAY
+   ============================================================================ */
+
+.scene-hud {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 18px;
+  align-items: flex-start;
+  background-color: rgba(9, 9, 11, 0.9);
+  color: #d2e823;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: var(--border-radius-sm);
+  border: var(--border-size) solid #d2e823;
+  font-family: var(--font-body);
+  pointer-events: none;
+}
+
+.scene-hud span {
+  color: #f8f4e8;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.scene-hud strong {
+  color: #d2e823;
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 4vw, 3.2rem);
+  line-height: 0.9;
+  margin-top: 4px;
+}
+
+.scene-hud ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scene-hud li {
+  background: #f8f4e8;
+  border: 2px solid #d2e823;
+  border-radius: 8px;
+  color: #09090b;
+  font-size: 0.8rem;
+  font-weight: 900;
+  padding: 8px 10px;
+  text-transform: uppercase;
+}
+
+.scene-hud b {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .traffic-scene-3d {
+    height: 400px;
+  }
+
+  .scene-hud {
+    bottom: 12px;
+    flex-direction: column;
+    gap: 10px;
+    left: 12px;
+    right: 12px;
+    top: auto;
+  }
+
+  .scene-hud ul {
+    justify-content: flex-start;
+  }
+}

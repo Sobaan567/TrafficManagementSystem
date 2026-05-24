@@ -1,0 +1,63 @@
+.officer-panel {
+  background-color: #F8F4E8;
+  border: 2px solid #09090B;
+  padding: 20px;
+  box-shadow: 6px 6px 0px #09090B;
+}
+
+.officer-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.officer-avatar {
+  width: 50px;
+  height: 50px;
+  background-color: #09090B;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  border: 2px solid #09090B;
+}
+
+.officer-info h4 { margin: 0; }
+.officer-badge { margin: 0; font-size: 0.8rem; font-weight: bold; }
+
+.officer-stats {
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.stat-label { font-size: 0.9rem; }
+.stat-value { font-weight: 900; }
+.rating { color: #09090B; }
+
+.officer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-officer {
+  padding: 10px;
+  border: 2px solid #09090B;
+  background-color: #09090B;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-officer.secondary {
+  background-color: white;
+  color: #09090B;
+}

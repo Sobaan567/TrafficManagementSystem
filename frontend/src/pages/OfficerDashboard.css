@@ -1,0 +1,810 @@
+/* ============================================================================
+   OFFICER DASHBOARD - NEO-BRUTALIST STYLING
+   ============================================================================ */
+
+.officer-dashboard {
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-3xl);
+  background-color: var(--color-bg);
+  min-height: calc(100vh - 100px);
+}
+
+/* ============================================================================
+   HEADER SECTION
+   ============================================================================ */
+
+.dashboard-header {
+  margin-bottom: var(--spacing-3xl);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.header-left h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  margin-bottom: var(--spacing-sm);
+}
+
+.header-subtitle {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
+   DASHBOARD SECTION
+   ============================================================================ */
+
+.dashboard-section {
+  margin-bottom: var(--spacing-3xl);
+}
+
+/* ============================================================================
+   STATS GRID
+   ============================================================================ */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.stat-card {
+  background-color: var(--color-bg);
+  border: var(--border-size) solid var(--color-primary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-primary));
+}
+
+.stat-card:hover {
+  transform: translate(4px, 4px);
+  box-shadow: var(--shadow-sm);
+  background-color: rgba(210, 232, 35, 0.05);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.stat-card h3 {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-primary);
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--color-accent);
+  margin: var(--spacing-sm) 0;
+  font-family: var(--font-display);
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.officer-command-band {
+  align-items: center;
+  background: #09090B;
+  border: var(--border-size) solid var(--color-primary);
+  border-radius: var(--border-radius);
+  box-shadow: 8px 8px 0 #D2E823;
+  color: #F8F4E8;
+  display: grid;
+  gap: var(--spacing-lg);
+  grid-template-columns: 150px minmax(0, 1fr) minmax(420px, 0.9fr);
+  margin-bottom: var(--spacing-3xl);
+  overflow: hidden;
+  padding: var(--spacing-lg);
+}
+
+.command-radar {
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(210, 232, 35, 0.28), transparent 62%);
+  border: 2px solid #D2E823;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.command-sweep {
+  animation: commandSweep 3.5s linear infinite;
+  background: conic-gradient(from 0deg, rgba(210, 232, 35, 0.7), rgba(210, 232, 35, 0.05) 50deg, transparent 80deg);
+  border-radius: 50%;
+  inset: 8px;
+  position: absolute;
+}
+
+.command-radar strong {
+  background: #09090B;
+  border: 2px solid #D2E823;
+  border-radius: 50%;
+  color: #D2E823;
+  display: grid;
+  font-family: var(--font-display);
+  height: 72px;
+  line-height: 1;
+  place-items: center;
+  position: relative;
+  width: 72px;
+  z-index: 1;
+}
+
+@keyframes commandSweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.command-copy span {
+  background: #D2E823;
+  color: #09090B;
+  display: inline-block;
+  font-weight: 900;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  text-transform: uppercase;
+}
+
+.command-copy h2 {
+  color: #F8F4E8;
+  font-family: var(--font-body) !important;
+  font-size: clamp(1.4rem, 3vw, 2.4rem) !important;
+  letter-spacing: 0 !important;
+  line-height: 1.08 !important;
+  margin: 0 0 8px !important;
+  text-transform: none !important;
+}
+
+.command-copy p {
+  color: #d8d3c4;
+  font-weight: 800;
+  margin: 0;
+}
+
+.command-signal-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.command-signal-grid article {
+  background: #F8F4E8;
+  border: 2px solid #D2E823;
+  border-radius: 8px;
+  color: #09090B;
+  padding: 14px;
+}
+
+.command-signal-grid article.warn {
+  background: #FFE7C2;
+}
+
+.command-signal-grid article.danger {
+  background: #FFE3DF;
+}
+
+.command-signal-grid article.live {
+  background: #E7F8E8;
+}
+
+.command-signal-grid article.accent {
+  background: #D2E823;
+}
+
+.officer-quick-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: var(--spacing-3xl);
+}
+
+.officer-quick-card {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.06) 1px, transparent 1px),
+    #F8F4E8;
+  background-size: 22px 22px;
+  border: var(--border-size) solid #09090B;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #09090B;
+  min-height: 210px;
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.officer-quick-card::after {
+  background: #09090B;
+  border-radius: 999px;
+  content: '';
+  height: 64px;
+  position: absolute;
+  right: -22px;
+  top: -22px;
+  width: 64px;
+}
+
+.officer-quick-card.live {
+  background-color: #E7F8E8;
+}
+
+.officer-quick-card.alert {
+  background-color: #FFE7C2;
+}
+
+.officer-quick-card.map {
+  background-color: #D2E823;
+}
+
+.officer-quick-card span {
+  background: #09090B;
+  color: #D2E823;
+  display: inline-block;
+  font-weight: 900;
+  margin-bottom: 18px;
+  padding: 6px 10px;
+  text-transform: uppercase;
+}
+
+.officer-quick-card strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  line-height: 0.9;
+}
+
+.officer-quick-card p {
+  color: #333;
+  font-weight: 800;
+  margin: 14px 0 18px;
+}
+
+.officer-quick-card button {
+  background: #09090B;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  color: #F8F4E8;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  padding: 10px 14px;
+  text-transform: uppercase;
+}
+
+.command-signal-grid span,
+.command-signal-grid strong {
+  display: block;
+}
+
+.command-signal-grid span {
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.command-signal-grid strong {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  margin-top: 8px;
+}
+
+/* ============================================================================
+   TABS NAVIGATION
+   ============================================================================ */
+
+.tabs-navigation {
+  display: flex;
+  gap: var(--spacing-md);
+  border-bottom: var(--border-size) solid var(--color-primary);
+  padding-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-lg);
+}
+
+.tab-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--color-primary);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.tab-button:hover {
+  color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* ============================================================================
+   TAB CONTENT
+   ============================================================================ */
+
+.tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+.dashboard-col-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.dashboard-col-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* ============================================================================
+   MAP & 3D CONTAINERS
+   ============================================================================ */
+
+.map-container,
+.scene-3d-container {
+  background-color: var(--color-bg);
+  border: var(--border-size) solid var(--color-primary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.map-container h2,
+.scene-3d-container h2 {
+  margin-bottom: var(--spacing-lg);
+  font-size: 1.25rem;
+}
+
+.map-container {
+  min-height: 500px;
+}
+
+.scene-3d-container {
+  min-height: 600px;
+  position: relative;
+}
+
+.officer-ai-fill {
+  background: #09090B;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #D2E823;
+  color: #F8F4E8;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 16px;
+}
+
+.officer-ai-fill strong {
+  color: #D2E823;
+  display: block;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.officer-ai-fill p {
+  margin: 4px 0 0;
+}
+
+.officer-ai-fill textarea {
+  background: #F8F4E8;
+  border: 2px solid #D2E823;
+  border-radius: 8px;
+  color: #09090B;
+  font-family: inherit;
+  font-weight: 800;
+  min-height: 86px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.officer-ai-fill button {
+  background: #D2E823;
+  border: 2px solid #F8F4E8;
+  border-radius: 8px;
+  color: #09090B;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  justify-self: start;
+  padding: 10px 18px;
+  text-transform: uppercase;
+}
+
+.officer-ai-fill span {
+  color: #F8F4E8;
+  font-weight: 900;
+}
+
+.officer-appeals-panel {
+  background: #F8F4E8;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #09090B;
+  padding: 24px;
+}
+
+.officer-appeals-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.officer-appeals-header h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 0.9;
+  margin: 0;
+}
+
+.officer-appeals-header p {
+  font-weight: 800;
+  margin: 8px 0 0;
+}
+
+.officer-appeals-header button,
+.officer-appeal-actions button {
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  color: #09090B;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  padding: 10px 14px;
+  text-transform: uppercase;
+}
+
+.officer-appeal-message,
+.officer-empty-appeals {
+  background: #fff;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  padding: 14px;
+}
+
+.appeal-filter-bar {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  margin-bottom: 18px;
+}
+
+.appeal-filter-bar input,
+.appeal-filter-bar select {
+  background: #fff;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 900;
+  padding: 12px;
+}
+
+.officer-appeals-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.officer-appeal-card {
+  background: #fff;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #09090B;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.officer-appeal-card.approved {
+  background: #E7F8E8;
+}
+
+.officer-appeal-card.rejected {
+  background: #FFE3DF;
+}
+
+.officer-appeal-card.need-more-info {
+  background: #FFF1D8;
+}
+
+.officer-appeal-top {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.officer-appeal-top span {
+  background: #09090B;
+  border-radius: 999px;
+  color: #D2E823;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  padding: 4px 9px;
+  text-transform: uppercase;
+}
+
+.officer-appeal-top h3 {
+  font-size: clamp(1.35rem, 2.4vw, 2.2rem);
+  line-height: 0.95;
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.officer-appeal-top strong {
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  flex: 0 1 auto;
+  max-width: 42%;
+  overflow: hidden;
+  padding: 8px 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.officer-appeal-top > div {
+  min-width: 0;
+}
+
+.officer-appeal-card dl {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.officer-appeal-card dt {
+  color: #555;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.officer-appeal-card dd {
+  font-weight: 900;
+  margin: 0;
+}
+
+.officer-appeal-reason {
+  background: #F8F4E8;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  font-weight: 800;
+  max-height: 112px;
+  margin: 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: 12px;
+}
+
+.officer-evidence-link {
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  color: #09090B;
+  display: inline-block;
+  font-weight: 900;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.officer-appeal-card textarea {
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 800;
+  min-height: 80px;
+  max-width: 100%;
+  padding: 10px;
+  resize: vertical;
+}
+
+.officer-appeal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.officer-appeal-actions button:nth-child(2) {
+  background: #FF3B3B;
+  color: #fff;
+}
+
+.officer-appeal-actions button:nth-child(3) {
+  background: #fff;
+}
+
+.officer-activity-panel {
+  background: #F8F4E8;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #09090B;
+  padding: 24px;
+}
+
+.activity-log-list {
+  display: grid;
+  gap: 12px;
+}
+
+.activity-log-list article {
+  background: #fff;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #09090B;
+  padding: 14px;
+}
+
+.activity-log-list span,
+.activity-log-list small {
+  display: block;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.activity-log-list span {
+  color: #85144b;
+  margin-bottom: 6px;
+}
+
+.activity-log-list strong {
+  display: block;
+}
+
+.activity-log-list small {
+  color: #666;
+  font-size: 0.75rem;
+  margin-top: 6px;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .officer-command-band {
+    grid-template-columns: 1fr;
+  }
+
+  .officer-quick-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .officer-appeals-header {
+    flex-direction: column;
+  }
+
+  .officer-appeals-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .command-radar {
+    max-width: 170px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .officer-dashboard {
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-lg);
+  }
+
+  .header-content {
+    flex-direction: column;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .command-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs-navigation {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .officer-appeals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .appeal-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .map-container,
+  .scene-3d-container {
+    min-height: 350px;
+  }
+}

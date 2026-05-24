@@ -1,0 +1,60 @@
+.violation-stats {
+  background-color: #F8F4E8;
+  padding: 20px;
+  border: 2px solid #09090B;
+}
+
+.violation-stats h3 {
+  margin-top: 0;
+  font-weight: 900;
+}
+
+/* Detailed Table View */
+.violations-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.violations-table th, .violations-table td {
+  padding: 10px;
+  border: 1px solid #09090B;
+  text-align: left;
+}
+
+.severity-badge {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.severity-badge.High { background-color: #f87171; color: white; }
+.severity-badge.Medium { background-color: #fbbf24; }
+.severity-badge.Low { background-color: #4ade80; }
+
+/* Card/Bar View */
+.violation-types {
+  display: grid;
+  gap: 15px;
+}
+
+.violation-type-card {
+  display: grid;
+  grid-template-columns: 1fr 40px;
+  gap: 5px;
+}
+
+.type-label { font-weight: bold; font-size: 0.9rem; }
+.type-count { font-weight: 900; text-align: right; }
+
+.type-bar {
+  grid-column: span 2;
+  height: 12px;
+  background-color: #e5e7eb;
+  border: 1px solid #09090B;
+}
+
+.type-bar-fill {
+  height: 100%;
+  background-color: #09090B;
+}

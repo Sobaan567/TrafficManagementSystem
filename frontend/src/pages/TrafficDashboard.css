@@ -1,0 +1,312 @@
+.traffic-command-page {
+  background: #F8F4E8;
+  color: #09090B;
+  min-height: calc(100vh - 100px);
+  padding: 34px 20px 80px;
+}
+
+.traffic-command-hero,
+.traffic-command-stats,
+.traffic-command-grid,
+.traffic-error {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1200px;
+}
+
+.traffic-command-hero {
+  align-items: flex-start;
+  background: #09090B;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 7px 7px 0 #D2E823;
+  color: #F8F4E8;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  overflow: hidden;
+  padding: clamp(26px, 5vw, 50px);
+  position: relative;
+}
+
+.traffic-command-hero::after {
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.12) 1px, transparent 1px);
+  background-size: 32px 32px;
+  content: '';
+  inset: 0;
+  opacity: 0.65;
+  position: absolute;
+}
+
+.traffic-command-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.traffic-command-hero span {
+  background: #D2E823;
+  color: #09090B;
+  display: inline-block;
+  font-weight: 900;
+  margin-bottom: 16px;
+  padding: 7px 12px;
+  text-transform: uppercase;
+}
+
+.traffic-command-hero h1 {
+  color: #F8F4E8;
+  font-size: clamp(2.6rem, 8vw, 5.5rem);
+  line-height: 0.9;
+  margin: 0 0 12px;
+}
+
+.traffic-command-hero p {
+  color: #d8d3c4;
+  font-weight: 800;
+  margin: 0;
+  max-width: 650px;
+}
+
+.traffic-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.traffic-hero-actions button,
+.traffic-hero-actions a {
+  background: #D2E823;
+  border: 2px solid #F8F4E8;
+  border-radius: 8px;
+  color: #09090B;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  padding: 10px 16px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.traffic-error {
+  background: #FFE3DF;
+  border: 2px solid #FF3B3B;
+  border-radius: 8px;
+  color: #b00020;
+  font-weight: 900;
+  margin-bottom: 18px;
+  padding: 14px;
+}
+
+.traffic-command-stats {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 24px;
+}
+
+.traffic-command-stats article,
+.traffic-radar-panel,
+.traffic-feed-panel {
+  background: #fff;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #09090B;
+}
+
+.traffic-command-stats article {
+  padding: 18px;
+}
+
+.traffic-command-stats span {
+  display: block;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.traffic-command-stats strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+  margin-top: 10px;
+}
+
+.traffic-command-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.75fr);
+}
+
+.traffic-radar-panel {
+  align-items: center;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(260px, 0.65fr) minmax(0, 1fr);
+  padding: 24px;
+}
+
+.traffic-radar {
+  aspect-ratio: 1;
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    radial-gradient(circle, rgba(210, 232, 35, 0.18), transparent 64%),
+    #09090B;
+  background-size: 24px 24px, 24px 24px, 100% 100%, 100% 100%;
+  border: 3px solid #09090B;
+  border-radius: 50%;
+  display: grid;
+  max-width: 360px;
+  place-items: center;
+  position: relative;
+}
+
+.traffic-radar-sweep {
+  animation: trafficSweep 3.2s linear infinite;
+  background: conic-gradient(from 0deg, rgba(210, 232, 35, 0.7), rgba(210, 232, 35, 0.03) 55deg, transparent 90deg);
+  border-radius: 50%;
+  inset: 16px;
+  position: absolute;
+}
+
+@keyframes trafficSweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.traffic-radar strong {
+  background: #D2E823;
+  border: 3px solid #F8F4E8;
+  border-radius: 50%;
+  color: #09090B;
+  display: grid;
+  font-family: var(--font-display);
+  height: 82px;
+  place-items: center;
+  position: relative;
+  width: 82px;
+  z-index: 1;
+}
+
+.radar-dot {
+  border: 2px solid #F8F4E8;
+  border-radius: 50%;
+  height: 22px;
+  position: absolute;
+  width: 22px;
+  z-index: 2;
+}
+
+.dot-0 { left: 24%; top: 28%; }
+.dot-1 { right: 22%; top: 38%; }
+.dot-2 { bottom: 24%; left: 44%; }
+.dot-3 { bottom: 38%; right: 34%; }
+
+.traffic-radar-panel h2,
+.traffic-feed-panel h2 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  margin: 0 0 8px;
+}
+
+.traffic-radar-panel p {
+  color: #555;
+  font-weight: 800;
+  margin: 0 0 22px;
+}
+
+.traffic-level-bars {
+  display: grid;
+  gap: 12px;
+}
+
+.traffic-level-bars div {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 90px minmax(0, 1fr) 34px;
+  font-weight: 900;
+}
+
+.traffic-level-bars div::before {
+  display: none;
+}
+
+.traffic-level-bars i {
+  border: 2px solid #09090B;
+  border-radius: 999px;
+  display: block;
+  height: 18px;
+  min-width: 8px;
+}
+
+.traffic-feed-panel {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+}
+
+.traffic-feed-panel article {
+  align-items: center;
+  background: #F8F4E8;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.traffic-feed-panel article > span {
+  border: 2px solid #09090B;
+  border-radius: 999px;
+  color: #fff;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 5px 9px;
+  text-transform: uppercase;
+}
+
+.traffic-feed-panel strong,
+.traffic-feed-panel small {
+  display: block;
+}
+
+.traffic-feed-panel small,
+.traffic-empty {
+  color: #555;
+  font-weight: 800;
+}
+
+.traffic-empty {
+  background: #F8F4E8;
+  border: 2px dashed #09090B;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+@media (max-width: 980px) {
+  .traffic-command-hero {
+    flex-direction: column;
+  }
+
+  .traffic-command-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .traffic-command-grid,
+  .traffic-radar-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .traffic-command-stats,
+  .traffic-level-bars div {
+    grid-template-columns: 1fr;
+  }
+}

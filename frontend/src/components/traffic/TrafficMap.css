@@ -1,0 +1,150 @@
+/* ============================================================================
+   TRAFFIC MAP - COMPONENT STYLING
+   ============================================================================ */
+
+.traffic-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ============================================================================
+   TRAFFIC MARKERS
+   ============================================================================ */
+
+.traffic-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transform: scale(0.8);
+  transition: all var(--transition-fast);
+}
+
+.traffic-marker:hover {
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+.marker-icon {
+  font-size: 2rem;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.marker-text {
+  background-color: var(--color-bg);
+  border: var(--border-size) solid var(--color-primary);
+  border-radius: var(--border-radius-sm);
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  margin: 0;
+}
+
+.traffic-marker.severity-low .marker-icon {
+  filter: hue-rotate(120deg) drop-shadow(2px 2px 4px rgba(46, 204, 64, 0.3));
+}
+
+.traffic-marker.severity-medium .marker-icon {
+  filter: hue-rotate(30deg) drop-shadow(2px 2px 4px rgba(255, 133, 27, 0.3));
+}
+
+.traffic-marker.severity-high .marker-icon {
+  filter: hue-rotate(-30deg) drop-shadow(2px 2px 4px rgba(255, 59, 59, 0.3));
+  animation: pulse-marker 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-marker {
+  0%, 100% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+/* ============================================================================
+   MAP LEGEND
+   ============================================================================ */
+
+.map-legend {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
+  background-color: var(--color-bg);
+  border: var(--border-size) solid var(--color-primary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+  z-index: 5;
+  max-width: 200px;
+}
+
+.map-legend h4 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-md);
+  color: var(--color-primary);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.85rem;
+  color: var(--color-primary);
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: var(--border-size) solid var(--color-primary);
+}
+
+.legend-color.low {
+  background-color: #2ecc40;
+}
+
+.legend-color.medium {
+  background-color: #ff851b;
+}
+
+.legend-color.high {
+  background-color: #ff3b3b;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .map-legend {
+    bottom: var(--spacing-md);
+    right: var(--spacing-md);
+    max-width: 180px;
+  }
+
+  .marker-text {
+    font-size: 0.7rem;
+  }
+}

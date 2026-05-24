@@ -1,0 +1,183 @@
+.challan-list {
+  background-color: #F8F4E8;
+  padding: 20px;
+  border: 2px solid #09090B;
+  position: relative;
+}
+
+.challan-list h3 {
+  margin-top: 0;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.challan-list-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.challan-list-heading p {
+  color: #555;
+  font-weight: 800;
+  margin: 0;
+}
+
+.challans-table-wrapper {
+  overflow-x: auto;
+}
+
+.challans-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.challans-table th {
+  padding: 12px;
+  border-bottom: 2px solid #09090B;
+  background-color: #09090B;
+  color: white;
+}
+
+.challans-table td {
+  padding: 12px;
+  border-bottom: 1px solid #09090B;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border: 1px solid #09090B;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.status-badge.paid { background-color: #4ade80; }
+.status-badge.pending,
+.status-badge.unpaid,
+.status-badge.partial { background-color: #fbbf24; }
+.status-badge.overdue { background-color: #f87171; }
+.status-badge.waived { background-color: #9be7ff; }
+
+.btn-action {
+  padding: 5px 10px;
+  margin-right: 5px;
+  border: 1px solid #09090B;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: #fff;
+}
+
+.btn-action.view:hover { background-color: #09090B; color: white; }
+.btn-action.print:hover { background-color: #09090B; color: white; }
+
+.challan-modal-backdrop {
+  align-items: center;
+  background: rgba(9, 9, 11, 0.72);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 7000;
+}
+
+.challan-modal {
+  background: #F8F4E8;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #D2E823;
+  max-height: 88vh;
+  max-width: 860px;
+  overflow: auto;
+  padding: 24px;
+  position: relative;
+  width: min(100%, 860px);
+}
+
+.challan-modal-close {
+  background: #09090B;
+  border: 2px solid #09090B;
+  border-radius: 50%;
+  color: #D2E823;
+  cursor: pointer;
+  font-weight: 900;
+  height: 38px;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 38px;
+}
+
+.modal-kicker {
+  background: #09090B;
+  color: #D2E823;
+  display: inline-block;
+  font-weight: 900;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  text-transform: uppercase;
+}
+
+.challan-modal h2 {
+  font-size: clamp(2rem, 5vw, 4rem);
+  margin: 0 0 18px;
+}
+
+.challan-detail-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.challan-detail-grid div {
+  background: #fff;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.challan-detail-grid span {
+  color: #555;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 900;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.challan-detail-grid strong {
+  display: block;
+  word-break: break-word;
+}
+
+.challan-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.challan-modal-actions button {
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  padding: 10px 14px;
+  text-transform: uppercase;
+}
+
+.challan-modal-actions button:last-child {
+  background: #fff;
+}
+
+@media (max-width: 640px) {
+  .challan-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
