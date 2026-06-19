@@ -11,7 +11,7 @@ const config = {
     },
   },
   options: {
-    encrypt: false, // Set to true for Azure SQL
+    encrypt: false, 
     trustServerCertificate: true,
     connectTimeout: 30000,
     requestTimeout: 30000,
@@ -53,7 +53,7 @@ const executeQuery = async (query, inputs = {}) => {
   try {
     const request = pool.request();
 
-    // Add input parameters
+    
     Object.keys(inputs).forEach((key) => {
       request.input(key, inputs[key]);
     });
@@ -71,7 +71,7 @@ const executeProcedure = async (procedureName, inputs = {}) => {
   try {
     const request = pool.request();
 
-    // Add input parameters
+    
     Object.keys(inputs).forEach((key) => {
       request.input(key, inputs[key]);
     });

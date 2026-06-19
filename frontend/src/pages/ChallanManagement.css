@@ -8,7 +8,8 @@
 .challan-hero,
 .challan-stats-grid,
 .challan-ops-grid,
-.challan-error {
+.challan-error,
+.challan-training-banner {
   margin-left: auto;
   margin-right: auto;
   max-width: 1200px;
@@ -85,10 +86,34 @@
   padding: 14px;
 }
 
+.challan-training-banner {
+  align-items: center;
+  background: #09090B;
+  border: 3px solid #D2E823;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #D2E823;
+  color: #F8F4E8;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+}
+
+.challan-training-banner strong {
+  color: #D2E823;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+}
+
+.challan-training-banner span {
+  font-weight: 900;
+}
+
 .challan-stats-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   margin-bottom: 24px;
 }
 
@@ -155,7 +180,7 @@
 
 .challan-table-panel table {
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 920px;
   width: 100%;
 }
 
@@ -205,6 +230,18 @@
   background: #FFE7C2;
 }
 
+.challan-demerit-pill {
+  background: #09090B;
+  border: 2px solid #D2E823;
+  border-radius: 999px;
+  color: #D2E823;
+  display: inline-block;
+  font-weight: 900;
+  min-width: 40px;
+  padding: 5px 10px;
+  text-align: center;
+}
+
 .priority-list {
   display: grid;
   gap: 12px;
@@ -244,6 +281,53 @@
   font-weight: 900;
 }
 
+.qr-link-button {
+  align-items: center;
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #09090B;
+  color: #09090B;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  gap: 8px;
+  padding: 8px 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.qr-link-button:hover {
+  box-shadow: 1px 1px 0 #09090B;
+  transform: translate(2px, 2px);
+}
+
+.mini-qr {
+  background: #F8F4E8;
+  border: 2px solid #09090B;
+  display: grid;
+  flex: 0 0 30px;
+  gap: 1px;
+  grid-template-columns: repeat(5, 1fr);
+  height: 30px;
+  padding: 3px;
+  width: 30px;
+}
+
+.mini-qr i {
+  background: #09090B;
+  display: block;
+}
+
+.mini-qr i:nth-child(2n),
+.mini-qr i:nth-child(7),
+.mini-qr i:nth-child(18),
+.mini-qr i:nth-child(22) {
+  opacity: 0;
+}
+
 .challan-empty,
 .priority-empty {
   background: #F8F4E8;
@@ -273,5 +357,10 @@
 @media (max-width: 560px) {
   .challan-stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .challan-training-banner {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

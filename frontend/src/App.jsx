@@ -7,10 +7,12 @@ import { AuthProvider } from './context/AuthContext';
 import { TrafficProvider } from './context/TrafficContext';
 
 // Components
-import CustomCursor from './components/common/CustomCursor';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import GeminiChatbot from './components/common/GeminiChatbot';
+import QuickDock from './components/common/QuickDock';
+import DashboardBentoFX from './components/common/DashboardBentoFX';
+import DashboardSignalRail from './components/common/DashboardSignalRail';
 
 // Public Pages
 import PublicHome from './pages/public/PublicHome';
@@ -27,6 +29,7 @@ import ChallanManagement from './pages/ChallanManagement';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import AdminDashboard from './pages/AdminDashboard';
+import SmartFeatures from './pages/SmartFeatures';
 import NotFound from './pages/NotFound';
 
 // Auth Guard
@@ -85,15 +88,19 @@ function App() {
     <AuthProvider>
       <TrafficProvider>
         <Router>
-          <CustomCursor />
+          <DashboardBentoFX />
           <div className="app-wrapper">
             <Header />
+            <DashboardSignalRail />
             <main className="main-content">
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/public" element={<PublicHome />} />
+                <Route path="/public/complaints" element={<PublicHome />} />
+                <Route path="/complaint" element={<PublicHome />} />
+                <Route path="/complaints" element={<PublicHome />} />
                 <Route path="/public/challan-tracker" element={<ChallanTracker />} />
                 <Route path="/public/traffic-info" element={<TrafficInfo />} />
                 <Route path="/public/account" element={<PublicAccount />} />
@@ -115,6 +122,10 @@ function App() {
                   element={<AuthGuard requiredRole="Officer"><Reports /></AuthGuard>}
                 />
                 <Route
+                  path="/smart-features"
+                  element={<AuthGuard requiredRole={['Officer', 'Admin', 'Supervisor']}><SmartFeatures /></AuthGuard>}
+                />
+                <Route
                   path="/admin-dashboard"
                   element={<AuthGuard requiredRole="Admin"><AdminDashboard /></AuthGuard>}
                 />
@@ -127,6 +138,7 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
+            <QuickDock />
             <GeminiChatbot />
             <Footer />
           </div>

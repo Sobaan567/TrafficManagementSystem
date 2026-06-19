@@ -1,4 +1,5 @@
 import React from 'react';
+import AnimatedNumber from '../common/AnimatedNumber';
 import './OfficerPanel.css';
 
 const OfficerPanel = ({ user, stats }) => {
@@ -22,15 +23,17 @@ const OfficerPanel = ({ user, stats }) => {
 
         <div className="stat-item">
           <span className="stat-label">Challans This Month</span>
-          <div className="stat-value">{stats?.totalChallans || 0}</div>
+          <div className="stat-value"><AnimatedNumber value={stats?.totalChallans || 0} /></div>
         </div>
 
         <div className="stat-item">
           <span className="stat-label">Collection Rate</span>
           <div className="stat-value">
-            {stats?.totalChallans > 0
-              ? Math.round((stats?.paidChallans / stats?.totalChallans) * 100)
-              : 0}%
+            <AnimatedNumber
+              value={`${stats?.totalChallans > 0
+                ? Math.round((stats?.paidChallans / stats?.totalChallans) * 100)
+                : 0}%`}
+            />
           </div>
         </div>
       </div>

@@ -1,7 +1,28 @@
 const { executeQuery } = require('../config/database');
+const { addDemeritEntry, ensureSmartFeatureTables } = require('./smartFeatureController');
+
+const normalizeRegistration = (value) => String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+
+const getDemeritPointsForViolation = (violationType, fineAmount) => {
+  const type = String(violationType || '').toLowerCase();
+  if (type.includes('drunk') || type.includes('reckless') || type.includes('accident')) return 25;
+  if (type.includes('signal') || type.includes('red light')) return 8;
+  if (type.includes('speed')) return 4;
+  if (type.includes('phone') || type.includes('mobile')) return 6;
+  if (type.includes('parking')) return 2;
+  if (Number(fineAmount || 0) >= 5000) return 20;
+  if (Number(fineAmount || 0) >= 2500) return 12;
+  return 3;
+};
+
+const normalizeDemeritPoints = (value, fallback) => {
+  if (value === undefined || value === null || value === '') return fallback;
+  return Math.max(0, Math.min(Number(value) || fallback, 100));
+};
 
 exports.getChallans = async (req, res) => {
   try {
+    await ensureSmartFeatureTables();
     const { status, paymentStatus, vehicleId, locationId } = req.query;
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
@@ -14,6 +35,7 @@ exports.getChallans = async (req, res) => {
         v.Make,
         v.Model,
         v.Color,
+        ISNULL(dp.DemeritPoints, 0) AS DemeritPoints,
         COALESCE(c.ViolationType, vi.ViolationType) AS DisplayViolationType,
         l.LocationName,
         l.CityName
@@ -21,6 +43,12 @@ exports.getChallans = async (req, res) => {
       LEFT JOIN Vehicles v ON v.VehicleID = c.VehicleID
       LEFT JOIN Violations vi ON vi.ViolationID = c.ViolationID
       LEFT JOIN Locations l ON l.LocationID = vi.LocationID
+      LEFT JOIN (
+        SELECT ChallanID, SUM(Points) AS DemeritPoints
+        FROM DriverDemeritLedger
+        WHERE ChallanID IS NOT NULL
+        GROUP BY ChallanID
+      ) dp ON dp.ChallanID = c.ChallanID
       WHERE 1=1
     `;
     const params = {};
@@ -42,8 +70,20 @@ exports.getChallans = async (req, res) => {
 
 exports.getChallanDetails = async (req, res) => {
   try {
+    await ensureSmartFeatureTables();
     const { challanId } = req.params;
-    const result = await executeQuery(`SELECT * FROM Challans WHERE ChallanID = @challanId`, { challanId });
+    const result = await executeQuery(
+      `SELECT c.*, ISNULL(dp.DemeritPoints, 0) AS DemeritPoints
+       FROM Challans c
+       LEFT JOIN (
+         SELECT ChallanID, SUM(Points) AS DemeritPoints
+         FROM DriverDemeritLedger
+         WHERE ChallanID IS NOT NULL
+         GROUP BY ChallanID
+       ) dp ON dp.ChallanID = c.ChallanID
+       WHERE c.ChallanID = @challanId`,
+      { challanId }
+    );
 
     if (result.recordset.length === 0)
       return res.status(404).json({ success: false, message: 'Challan not found' });
@@ -57,8 +97,9 @@ exports.getChallanDetails = async (req, res) => {
 
 exports.createChallan = async (req, res) => {
   try {
-    const { violationId, vehicleId, ownerName, ownerEmail, ownerPhone, violationType, location, fineAmount, description, dueDate } = req.body;
+    const { violationId, vehicleId, ownerName, ownerEmail, ownerPhone, violationType, location, fineAmount, description, dueDate, demeritPoints } = req.body;
     const challanNumber = `CH-${new Date().getFullYear()}-${Date.now()}`;
+    await ensureSmartFeatureTables();
 
     const result = await executeQuery(
       `INSERT INTO Challans (
@@ -74,7 +115,34 @@ exports.createChallan = async (req, res) => {
       { challanNumber, violationId, vehicleId, ownerName, ownerEmail, ownerPhone, officerId: req.user.userId, violationType, location, fineAmount, description, dueDate }
     );
 
-    res.status(201).json({ success: true, message: 'Challan created successfully', challanId: result.recordset[0].ChallanID, challanNumber });
+    const challanId = result.recordset[0].ChallanID;
+    let demerit = null;
+
+    const vehicleResult = await executeQuery(
+      `SELECT TOP 1 VehicleID, RegistrationNumber FROM Vehicles WHERE VehicleID = @vehicleId`,
+      { vehicleId }
+    );
+    const registrationNumber = normalizeRegistration(vehicleResult.recordset[0]?.RegistrationNumber);
+
+    if (registrationNumber) {
+      const points = normalizeDemeritPoints(demeritPoints, getDemeritPointsForViolation(violationType, fineAmount));
+      demerit = await addDemeritEntry({
+        registrationNumber,
+        vehicleId,
+        challanId,
+        points,
+        reason: violationType || 'Traffic violation',
+        userId: req.user.userId,
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Challan created successfully',
+      challanId,
+      challanNumber,
+      demerit,
+    });
   } catch (error) {
     console.error('Create challan error:', error);
     res.status(500).json({ success: false, message: 'Failed to create challan' });

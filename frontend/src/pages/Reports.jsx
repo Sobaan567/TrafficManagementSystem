@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import SlideDownText from '../components/common/SlideDownText';
 import './Reports.css';
 
 const reportCards = [
@@ -29,7 +30,7 @@ export default function Reports() {
       <section className="reports-hero">
         <div>
           <span>Analytics Command</span>
-          <h1>Reports Center</h1>
+          <h1><SlideDownText text="Reports Center" /></h1>
           <p>Operational numbers, citizen-service pressure, and road-risk signals in one executive view.</p>
         </div>
         <Link to="/officer-dashboard">Back to Dashboard</Link>

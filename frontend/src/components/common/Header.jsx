@@ -14,6 +14,7 @@ const Header = () => {
   const [liveNotifications, setLiveNotifications] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [themeMode, setThemeMode] = useState(() => localStorage.getItem('tmsThemeMode') || 'balanced');
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -79,6 +80,11 @@ const Header = () => {
     };
   }, []);
 
+  useEffect(() => {
+    document.documentElement.dataset.tmsTheme = themeMode;
+    localStorage.setItem('tmsThemeMode', themeMode);
+  }, [themeMode]);
+
   const dateLabel = now.toLocaleDateString(undefined, {
     weekday: 'long',
     year: 'numeric',
@@ -138,11 +144,19 @@ const Header = () => {
     }
   };
 
+  const rotateTheme = () => {
+    setThemeMode((current) => {
+      if (current === 'balanced') return 'night';
+      if (current === 'night') return 'clean';
+      return 'balanced';
+    });
+  };
+
   return (
     <header className="header">
       <div className="header-container">
         <Link to="/" className="header-logo">
-          🚗 TMS
+          TMS
         </Link>
 
         <nav className="nav-menu">
@@ -153,11 +167,15 @@ const Header = () => {
           {isAuthenticated && user?.role !== 'Public' && (
             <>
               {user?.role === 'Admin' ? (
-                <Link to="/admin-dashboard" className="nav-link">Admin Dashboard</Link>
+                <>
+                  <Link to="/admin-dashboard" className="nav-link">Admin Dashboard</Link>
+                  <Link to="/smart-features" className="nav-link">Smart Features</Link>
+                </>
               ) : (
                 <>
                   <Link to="/officer-dashboard" className="nav-link">Dashboard</Link>
                   <Link to="/challan-management" className="nav-link">Challans</Link>
+                  <Link to="/smart-features" className="nav-link">Smart Features</Link>
                   <Link to="/reports" className="nav-link">Reports</Link>
                 </>
               )}
@@ -185,6 +203,9 @@ const Header = () => {
             <span>{dateLabel}</span>
             <strong>{timeLabel}</strong>
           </div>
+          <button type="button" className={`theme-toggle theme-${themeMode}`} onClick={rotateTheme} aria-label="Change dashboard theme">
+            {themeMode === 'balanced' ? 'BAL' : themeMode === 'night' ? 'NIT' : 'CLN'}
+          </button>
           <div className="notification-wrap">
             <button
               type="button"

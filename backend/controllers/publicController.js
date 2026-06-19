@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { executeQuery } = require('../config/database');
 const { createNotification, createRoleNotifications, logActivity } = require('../utils/systemEvents');
+const { ensureSmartFeatureTables, getDemeritProfileByRegistration } = require('./smartFeatureController');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRY = '24h';
@@ -15,6 +16,29 @@ const normalizeRegistration = (value) =>
 const normalizeChallanNumber = (value) => String(value || '').trim().toUpperCase();
 
 const normalizeNic = (value) => String(value || '').replace(/\D/g, '');
+
+const normalizePriority = (value) => {
+  const priority = String(value || '').trim();
+  return ['Low', 'Medium', 'High', 'Critical'].includes(priority) ? priority : 'Medium';
+};
+
+const normalizeComplaintStatus = (value) => {
+  const status = String(value || '').trim();
+  return ['Open', 'In Review', 'Resolved', 'Dismissed'].includes(status) ? status : 'Open';
+};
+
+const normalizeTrackingCode = (value) =>
+  String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+
+const buildComplaintTrackingCode = (complaintId) =>
+  `CMP-${String(complaintId || '').padStart(5, '0')}`;
+
+const normalizeEvidenceDataUrl = (value) => {
+  const evidence = String(value || '').trim();
+  if (!evidence) return '';
+  if (!evidence.startsWith('data:')) return '';
+  return evidence.length > 350000 ? '' : evidence;
+};
 
 const last4 = (value) => {
   const digits = String(value || '').replace(/\D/g, '');
@@ -91,6 +115,54 @@ const ensurePublicFeatureTables = async () => {
         CONSTRAINT UQ_PublicAlertSubscriptions_UserArea UNIQUE (UserID, AreaName)
       );
     END
+
+    IF NOT EXISTS (
+      SELECT 1 FROM sys.tables WHERE name = 'PublicComplaints'
+    )
+    BEGIN
+      CREATE TABLE PublicComplaints (
+        ComplaintID INT PRIMARY KEY IDENTITY(1,1),
+        UserID INT NULL,
+        ContactName NVARCHAR(180) NOT NULL,
+        ContactPhone NVARCHAR(40) NULL,
+        ContactEmail NVARCHAR(180) NULL,
+        VehicleRegistrationNumber NVARCHAR(50) NULL,
+        Category NVARCHAR(80) NOT NULL,
+        Priority NVARCHAR(40) NOT NULL DEFAULT 'Medium',
+        LocationName NVARCHAR(180) NULL,
+        Description NVARCHAR(1400) NOT NULL,
+        Status NVARCHAR(40) NOT NULL DEFAULT 'Open',
+        OfficerNote NVARCHAR(1000) NULL,
+        TrackingCode NVARCHAR(40) NULL,
+        EvidenceFileName NVARCHAR(255) NULL,
+        EvidenceDataUrl NVARCHAR(MAX) NULL,
+        CreatedAt DATETIME DEFAULT GETDATE(),
+        UpdatedAt DATETIME DEFAULT GETDATE(),
+        ResolvedAt DATETIME NULL,
+        FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE SET NULL
+      );
+    END
+  `);
+
+  await executeQuery(`
+    IF COL_LENGTH('PublicComplaints', 'TrackingCode') IS NULL
+      ALTER TABLE PublicComplaints ADD TrackingCode NVARCHAR(40) NULL;
+  `);
+
+  await executeQuery(`
+    IF COL_LENGTH('PublicComplaints', 'EvidenceFileName') IS NULL
+      ALTER TABLE PublicComplaints ADD EvidenceFileName NVARCHAR(255) NULL;
+  `);
+
+  await executeQuery(`
+    IF COL_LENGTH('PublicComplaints', 'EvidenceDataUrl') IS NULL
+      ALTER TABLE PublicComplaints ADD EvidenceDataUrl NVARCHAR(MAX) NULL;
+  `);
+
+  await executeQuery(`
+    UPDATE PublicComplaints
+    SET TrackingCode = CONCAT('CMP-', RIGHT(CONCAT('00000', ComplaintID), 5))
+    WHERE TrackingCode IS NULL OR TrackingCode = '';
   `);
 };
 
@@ -127,6 +199,7 @@ const mapVehicleDashboard = (vehicle, rows) => {
     challanNumber: r.ChallanNumber,
     issueDateTime: r.IssueDateTime,
     fineAmount: r.FineAmount,
+    demeritPoints: r.DemeritPoints || 0,
     paidAmount: r.PaidAmount,
     remainingAmount: r.RemainingAmount,
     ownerName: r.OwnerName || vehicle.OwnerName,
@@ -322,6 +395,7 @@ exports.registerPublicCitizen = async (req, res) => {
 
 exports.getPublicCitizenDashboard = async (req, res) => {
   try {
+    await ensureSmartFeatureTables();
     const profile = await getPublicProfileForUser(req.user.userId);
 
     if (!profile) {
@@ -367,6 +441,7 @@ exports.getPublicCitizenDashboard = async (req, res) => {
           c.PaidAmount,
           c.RemainingAmount,
           c.OwnerName,
+          ISNULL(dp.DemeritPoints, 0) AS DemeritPoints,
           c.PaymentStatus,
           c.ChallanStatus,
           v.ViolationID,
@@ -381,6 +456,12 @@ exports.getPublicCitizenDashboard = async (req, res) => {
         FROM Challans c
         INNER JOIN Violations v ON v.ViolationID = c.ViolationID
         INNER JOIN Locations l ON l.LocationID = v.LocationID
+        LEFT JOIN (
+          SELECT ChallanID, SUM(Points) AS DemeritPoints
+          FROM DriverDemeritLedger
+          WHERE ChallanID IS NOT NULL
+          GROUP BY ChallanID
+        ) dp ON dp.ChallanID = c.ChallanID
         WHERE c.VehicleID = @vehicleId
         ORDER BY c.IssueDateTime DESC
         `,
@@ -403,6 +484,7 @@ exports.getPublicCitizenDashboard = async (req, res) => {
           role: profile.Role,
           nicNumber: profile.NICNumber,
         },
+        demeritProfile: await getDemeritProfileByRegistration(profile.VehicleRegistrationNumber),
         ...vehicleDashboard,
       },
     });
@@ -475,6 +557,7 @@ exports.updatePublicCitizenProfile = async (req, res) => {
  */
 exports.getPublicChallanByNumber = async (req, res) => {
   try {
+    await ensureSmartFeatureTables();
     const challanNumber = normalizeChallanNumber(req.params.challanNumber);
     const registrationNumber = normalizeRegistration(req.query.registrationNumber);
 
@@ -498,6 +581,7 @@ exports.getPublicChallanByNumber = async (req, res) => {
         c.RemainingAmount,
         c.PaymentStatus,
         c.ChallanStatus,
+        ISNULL(dp.DemeritPoints, 0) AS DemeritPoints,
         c.DueDate,
         c.Description,
         v.ViolationID,
@@ -524,25 +608,17 @@ exports.getPublicChallanByNumber = async (req, res) => {
       INNER JOIN Vehicles ve ON ve.VehicleID = c.VehicleID
       INNER JOIN Violations v ON v.ViolationID = c.ViolationID
       INNER JOIN Locations l ON l.LocationID = v.LocationID
+      LEFT JOIN (
+        SELECT ChallanID, SUM(Points) AS DemeritPoints
+        FROM DriverDemeritLedger
+        WHERE ChallanID IS NOT NULL
+        GROUP BY ChallanID
+      ) dp ON dp.ChallanID = c.ChallanID
       WHERE c.ChallanNumber = @challanNumber
         AND ve.RegistrationNumber = @registrationNumber
       `,
       { challanNumber, registrationNumber }
     );
-
-    await createRoleNotifications({
-      roles: ['Officer', 'Admin'],
-      title: 'New citizen appeal',
-      body: `${vehicleRegistrationNumber} submitted an appeal for ${challanNumber || 'a challan'}.`,
-      type: 'appeal',
-    });
-    await logActivity({
-      user: req.user,
-      actionType: 'Appeal Submitted',
-      entityType: 'Appeal',
-      entityId: result.recordset[0]?.AppealID,
-      description: `Citizen submitted appeal for ${challanNumber || vehicleRegistrationNumber}`,
-    });
 
     if (!result.recordset?.length) {
       return res.status(404).json({
@@ -565,6 +641,7 @@ exports.getPublicChallanByNumber = async (req, res) => {
           challanNumber: row.ChallanNumber,
           issueDateTime: row.IssueDateTime,
           fineAmount: row.FineAmount,
+          demeritPoints: row.DemeritPoints || 0,
           paidAmount: row.PaidAmount,
           remainingAmount: row.RemainingAmount,
           paymentStatus: getPublicPaymentStatus(row.PaymentStatus, row.ChallanStatus, row.RemainingAmount),
@@ -612,12 +689,90 @@ exports.getPublicChallanByNumber = async (req, res) => {
   }
 };
 
+exports.verifyPublicChallanToken = async (req, res) => {
+  try {
+    const token = String(req.params.token || '').trim();
+    let decoded = '';
+    try {
+      decoded = Buffer.from(token, 'base64').toString('utf8');
+    } catch (error) {
+      decoded = '';
+    }
+
+    const [challanNumberRaw, registrationRaw] = decoded.split('|');
+    const challanNumber = normalizeChallanNumber(challanNumberRaw);
+    const registrationNumber = normalizeRegistration(registrationRaw);
+
+    if (!challanNumber || !registrationNumber) {
+      return res.status(400).json({ success: false, verified: false, message: 'Invalid challan verification token' });
+    }
+
+    const result = await executeQuery(
+      `
+      SELECT TOP 1
+        c.ChallanID,
+        c.ChallanNumber,
+        c.IssueDateTime,
+        c.FineAmount,
+        c.PaymentStatus,
+        c.ChallanStatus,
+        c.RemainingAmount,
+        ISNULL(dp.DemeritPoints, 0) AS DemeritPoints,
+        v.ViolationType,
+        v.Severity,
+        l.LocationName,
+        ve.RegistrationNumber
+      FROM Challans c
+      INNER JOIN Vehicles ve ON ve.VehicleID = c.VehicleID
+      INNER JOIN Violations v ON v.ViolationID = c.ViolationID
+      INNER JOIN Locations l ON l.LocationID = v.LocationID
+      LEFT JOIN (
+        SELECT ChallanID, SUM(Points) AS DemeritPoints
+        FROM DriverDemeritLedger
+        WHERE ChallanID IS NOT NULL
+        GROUP BY ChallanID
+      ) dp ON dp.ChallanID = c.ChallanID
+      WHERE c.ChallanNumber = @challanNumber
+        AND ve.RegistrationNumber = @registrationNumber
+      `,
+      { challanNumber, registrationNumber }
+    );
+
+    if (!result.recordset.length) {
+      return res.status(404).json({ success: false, verified: false, message: 'Challan verification failed' });
+    }
+
+    const row = result.recordset[0];
+    return res.json({
+      success: true,
+      verified: true,
+      message: 'Challan verified',
+      data: {
+        challanNumber: row.ChallanNumber,
+        registrationNumber: row.RegistrationNumber,
+        issueDateTime: row.IssueDateTime,
+        violationType: row.ViolationType,
+        severity: row.Severity,
+        locationName: row.LocationName,
+        fineAmount: row.FineAmount,
+        paymentStatus: getPublicPaymentStatus(row.PaymentStatus, row.ChallanStatus, row.RemainingAmount),
+        challanStatus: row.ChallanStatus,
+        demeritPoints: row.DemeritPoints || 0,
+      },
+    });
+  } catch (error) {
+    console.error('Verify public challan token error:', error);
+    return res.status(500).json({ success: false, verified: false, message: 'Failed to verify challan' });
+  }
+};
+
 /**
  * Public vehicle summary by registration number.
  * Optionally requires last4 of phone to reduce enumeration.
  */
 exports.getPublicVehicleSummary = async (req, res) => {
   try {
+    await ensureSmartFeatureTables();
     const registrationNumber = normalizeRegistration(req.params.registrationNumber);
     const ownerPhoneLast4 = String(req.query.ownerPhoneLast4 || '').trim();
 
@@ -692,6 +847,7 @@ exports.getPublicVehicleSummary = async (req, res) => {
         c.IssueDateTime,
         c.FineAmount,
         c.OwnerName,
+        ISNULL(dp.DemeritPoints, 0) AS DemeritPoints,
         c.PaymentStatus,
         c.ChallanStatus,
         v.ViolationID,
@@ -706,6 +862,12 @@ exports.getPublicVehicleSummary = async (req, res) => {
       FROM Challans c
       INNER JOIN Violations v ON v.ViolationID = c.ViolationID
       INNER JOIN Locations l ON l.LocationID = v.LocationID
+      LEFT JOIN (
+        SELECT ChallanID, SUM(Points) AS DemeritPoints
+        FROM DriverDemeritLedger
+        WHERE ChallanID IS NOT NULL
+        GROUP BY ChallanID
+      ) dp ON dp.ChallanID = c.ChallanID
       WHERE c.VehicleID = @vehicleId
       ORDER BY c.IssueDateTime DESC
       `,
@@ -745,6 +907,7 @@ exports.getPublicVehicleSummary = async (req, res) => {
           challanNumber: r.ChallanNumber,
           issueDateTime: r.IssueDateTime,
           fineAmount: r.FineAmount,
+          demeritPoints: r.DemeritPoints || 0,
           ownerName: r.OwnerName || vehicle.OwnerName,
           paymentStatus: getPublicPaymentStatus(r.PaymentStatus, r.ChallanStatus, 0),
           challanStatus: r.ChallanStatus,
@@ -1076,6 +1239,349 @@ exports.updateOfficerPublicAppeal = async (req, res) => {
       success: false,
       message: 'Failed to update appeal',
     });
+  }
+};
+
+exports.createPublicComplaint = async (req, res) => {
+  try {
+    await ensurePublicFeatureTables();
+
+    const profile = req.user?.role === 'Public' ? await getPublicProfileForUser(req.user.userId) : null;
+    const contactName = String(
+      req.body.contactName
+      || [profile?.FirstName, profile?.LastName].filter(Boolean).join(' ')
+      || req.body.fullName
+      || ''
+    ).trim();
+    const contactPhone = String(req.body.contactPhone || profile?.PhoneNumber || '').trim();
+    const contactEmail = String(req.body.contactEmail || profile?.Email || '').trim();
+    const vehicleRegistrationNumber = normalizeRegistration(
+      req.body.vehicleRegistrationNumber || profile?.VehicleRegistrationNumber || ''
+    );
+    const category = String(req.body.category || 'General').trim().slice(0, 80);
+    const priority = normalizePriority(req.body.priority);
+    const locationName = String(req.body.locationName || '').trim().slice(0, 180);
+    const description = String(req.body.description || '').trim();
+    const evidenceFileName = String(req.body.evidenceFileName || '').trim().slice(0, 255);
+    const evidenceDataUrl = normalizeEvidenceDataUrl(req.body.evidenceDataUrl);
+    const userId = profile ? req.user.userId : null;
+
+    if (!contactName || contactName.length < 2) {
+      return res.status(400).json({ success: false, message: 'Please enter your name' });
+    }
+
+    if (!contactPhone && !contactEmail) {
+      return res.status(400).json({ success: false, message: 'Please enter phone or email for follow-up' });
+    }
+
+    if (!description || description.length < 12) {
+      return res.status(400).json({ success: false, message: 'Please describe the complaint with at least 12 characters' });
+    }
+
+    const result = await executeQuery(
+      `
+      INSERT INTO PublicComplaints
+        (UserID, ContactName, ContactPhone, ContactEmail, VehicleRegistrationNumber, Category, Priority, LocationName, Description, EvidenceFileName, EvidenceDataUrl)
+      OUTPUT
+        INSERTED.ComplaintID AS complaintId,
+        INSERTED.Status AS status,
+        INSERTED.Priority AS priority,
+        INSERTED.CreatedAt AS createdAt
+      VALUES
+        (@userId, @contactName, @contactPhone, @contactEmail, @vehicleRegistrationNumber, @category, @priority, @locationName, @description, @evidenceFileName, @evidenceDataUrl)
+      `,
+      {
+        userId,
+        contactName,
+        contactPhone,
+        contactEmail,
+        vehicleRegistrationNumber,
+        category,
+        priority,
+        locationName,
+        description,
+        evidenceFileName,
+        evidenceDataUrl,
+      }
+    );
+
+    const insertedComplaint = result.recordset[0];
+    const trackingCode = buildComplaintTrackingCode(insertedComplaint.complaintId);
+    await executeQuery(
+      `UPDATE PublicComplaints SET TrackingCode = @trackingCode WHERE ComplaintID = @complaintId`,
+      { trackingCode, complaintId: insertedComplaint.complaintId }
+    );
+    const complaint = {
+      ...insertedComplaint,
+      trackingCode,
+      evidenceFileName,
+      hasEvidence: Boolean(evidenceDataUrl),
+    };
+    await createRoleNotifications({
+      roles: ['Officer', 'Admin'],
+      title: `New complaint ${trackingCode}`,
+      body: `${category} complaint${locationName ? ` near ${locationName}` : ''} is waiting for review.`,
+      type: priority === 'Critical' ? 'danger' : 'appeal',
+    });
+    await logActivity({
+      user: req.user || null,
+      actionType: 'Complaint Submitted',
+      entityType: 'Complaint',
+      entityId: trackingCode,
+      description: `${contactName} submitted ${trackingCode} for ${category}`,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Complaint submitted',
+      data: complaint,
+    });
+  } catch (error) {
+    console.error('Public complaint create error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to submit complaint',
+    });
+  }
+};
+
+exports.getPublicComplaints = async (req, res) => {
+  try {
+    await ensurePublicFeatureTables();
+
+    const result = await executeQuery(
+      `
+      SELECT
+        ComplaintID AS complaintId,
+        COALESCE(TrackingCode, CONCAT('CMP-', RIGHT(CONCAT('00000', ComplaintID), 5))) AS trackingCode,
+        ContactName AS contactName,
+        ContactPhone AS contactPhone,
+        ContactEmail AS contactEmail,
+        VehicleRegistrationNumber AS vehicleRegistrationNumber,
+        Category AS category,
+        Priority AS priority,
+        LocationName AS locationName,
+        Description AS description,
+        Status AS status,
+        OfficerNote AS officerNote,
+        EvidenceFileName AS evidenceFileName,
+        EvidenceDataUrl AS evidenceDataUrl,
+        CreatedAt AS createdAt,
+        UpdatedAt AS updatedAt,
+        ResolvedAt AS resolvedAt
+      FROM PublicComplaints
+      WHERE UserID = @userId
+      ORDER BY CreatedAt DESC
+      `,
+      { userId: req.user.userId }
+    );
+
+    return res.json({ success: true, data: result.recordset || [] });
+  } catch (error) {
+    console.error('Public complaints list error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load complaints',
+    });
+  }
+};
+
+exports.getOfficerPublicComplaints = async (req, res) => {
+  try {
+    await ensurePublicFeatureTables();
+
+    const result = await executeQuery(`
+      SELECT
+        c.ComplaintID AS complaintId,
+        COALESCE(c.TrackingCode, CONCAT('CMP-', RIGHT(CONCAT('00000', c.ComplaintID), 5))) AS trackingCode,
+        c.UserID AS userId,
+        c.ContactName AS contactName,
+        c.ContactPhone AS contactPhone,
+        c.ContactEmail AS contactEmail,
+        c.VehicleRegistrationNumber AS vehicleRegistrationNumber,
+        c.Category AS category,
+        c.Priority AS priority,
+        c.LocationName AS locationName,
+        c.Description AS description,
+        c.Status AS status,
+        c.OfficerNote AS officerNote,
+        c.EvidenceFileName AS evidenceFileName,
+        c.EvidenceDataUrl AS evidenceDataUrl,
+        c.CreatedAt AS createdAt,
+        c.UpdatedAt AS updatedAt,
+        c.ResolvedAt AS resolvedAt,
+        u.Username AS username,
+        u.FirstName AS firstName,
+        u.LastName AS lastName
+      FROM PublicComplaints c
+      LEFT JOIN Users u ON u.UserID = c.UserID
+      ORDER BY
+        CASE
+          WHEN c.Status = 'Open' THEN 0
+          WHEN c.Status = 'In Review' THEN 1
+          ELSE 2
+        END,
+        CASE
+          WHEN c.Priority = 'Critical' THEN 0
+          WHEN c.Priority = 'High' THEN 1
+          WHEN c.Priority = 'Medium' THEN 2
+          ELSE 3
+        END,
+        c.CreatedAt DESC
+    `);
+
+    return res.json({ success: true, data: result.recordset || [] });
+  } catch (error) {
+    console.error('Officer public complaints list error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load public complaints',
+    });
+  }
+};
+
+exports.updateOfficerPublicComplaint = async (req, res) => {
+  try {
+    await ensurePublicFeatureTables();
+
+    const complaintId = Number(req.params.complaintId);
+    const status = normalizeComplaintStatus(req.body.status);
+    const priority = normalizePriority(req.body.priority);
+    const officerNote = String(req.body.officerNote || '').trim();
+
+    if (!complaintId) {
+      return res.status(400).json({ success: false, message: 'complaintId is required' });
+    }
+
+    const result = await executeQuery(
+      `
+      UPDATE PublicComplaints
+      SET Status = @status,
+          Priority = @priority,
+          OfficerNote = @officerNote,
+          UpdatedAt = GETDATE(),
+          ResolvedAt = CASE WHEN @status IN ('Resolved', 'Dismissed') THEN GETDATE() ELSE ResolvedAt END
+      OUTPUT
+        INSERTED.ComplaintID AS complaintId,
+        COALESCE(INSERTED.TrackingCode, CONCAT('CMP-', RIGHT(CONCAT('00000', INSERTED.ComplaintID), 5))) AS trackingCode,
+        INSERTED.Status AS status,
+        INSERTED.Priority AS priority,
+        INSERTED.OfficerNote AS officerNote,
+        INSERTED.UpdatedAt AS updatedAt,
+        INSERTED.ResolvedAt AS resolvedAt,
+        INSERTED.UserID AS userId,
+        INSERTED.Category AS category
+      WHERE ComplaintID = @complaintId
+      `,
+      { complaintId, status, priority, officerNote }
+    );
+
+    if (!result.recordset.length) {
+      return res.status(404).json({ success: false, message: 'Complaint not found' });
+    }
+
+    const complaint = result.recordset[0];
+    if (complaint.userId) {
+      await createNotification({
+        userId: complaint.userId,
+        title: `Complaint ${complaint.trackingCode || complaintId} ${status}`,
+        body: `Your ${complaint.category || 'public'} complaint is now ${status}.`,
+        type: status === 'Resolved' ? 'success' : status === 'Dismissed' ? 'danger' : 'info',
+      });
+    }
+    await logActivity({
+      user: req.user,
+      actionType: `Complaint ${status}`,
+      entityType: 'Complaint',
+      entityId: complaint.trackingCode || complaintId,
+      description: `Staff marked ${complaint.trackingCode || `complaint ${complaintId}`} as ${status}`,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Complaint updated',
+      data: complaint,
+    });
+  } catch (error) {
+    console.error('Officer public complaint update error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update complaint',
+    });
+  }
+};
+
+exports.trackPublicComplaint = async (req, res) => {
+  try {
+    await ensurePublicFeatureTables();
+
+    const trackingCode = normalizeTrackingCode(req.params.trackingCode || req.query.trackingCode);
+    if (!trackingCode) {
+      return res.status(400).json({ success: false, message: 'Tracking code is required' });
+    }
+
+    const result = await executeQuery(
+      `
+      SELECT TOP 1
+        ComplaintID AS complaintId,
+        COALESCE(TrackingCode, CONCAT('CMP-', RIGHT(CONCAT('00000', ComplaintID), 5))) AS trackingCode,
+        Category AS category,
+        Priority AS priority,
+        LocationName AS locationName,
+        Description AS description,
+        Status AS status,
+        OfficerNote AS officerNote,
+        EvidenceFileName AS evidenceFileName,
+        CASE WHEN EvidenceDataUrl IS NULL OR EvidenceDataUrl = '' THEN 0 ELSE 1 END AS hasEvidence,
+        CreatedAt AS createdAt,
+        UpdatedAt AS updatedAt,
+        ResolvedAt AS resolvedAt
+      FROM PublicComplaints
+      WHERE UPPER(REPLACE(COALESCE(TrackingCode, CONCAT('CMP-', RIGHT(CONCAT('00000', ComplaintID), 5))), ' ', '')) = @trackingCode
+      `,
+      { trackingCode }
+    );
+
+    if (!result.recordset.length) {
+      return res.status(404).json({ success: false, message: 'Complaint not found' });
+    }
+
+    return res.json({ success: true, data: result.recordset[0] });
+  } catch (error) {
+    console.error('Public complaint track error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to track complaint' });
+  }
+};
+
+exports.getPublicComplaintMap = async (req, res) => {
+  try {
+    await ensurePublicFeatureTables();
+
+    const result = await executeQuery(`
+      SELECT TOP 40
+        ComplaintID AS complaintId,
+        COALESCE(TrackingCode, CONCAT('CMP-', RIGHT(CONCAT('00000', ComplaintID), 5))) AS trackingCode,
+        Category AS category,
+        Priority AS priority,
+        LocationName AS locationName,
+        Status AS status,
+        CreatedAt AS createdAt
+      FROM PublicComplaints
+      WHERE Status IN ('Open', 'In Review')
+      ORDER BY
+        CASE
+          WHEN Priority = 'Critical' THEN 0
+          WHEN Priority = 'High' THEN 1
+          WHEN Priority = 'Medium' THEN 2
+          ELSE 3
+        END,
+        CreatedAt DESC
+    `);
+
+    return res.json({ success: true, data: result.recordset || [] });
+  } catch (error) {
+    console.error('Public complaint map error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to load complaint map' });
   }
 };
 

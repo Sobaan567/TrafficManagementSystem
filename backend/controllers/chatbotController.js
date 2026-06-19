@@ -52,7 +52,58 @@ const parseChallanFromMessage = (message = '') => {
   }
 };
 
+const pickViolationType = (text = '') => {
+  const lower = text.toLowerCase();
+  if (lower.includes('helmet')) return 'No Helmet';
+  if (lower.includes('seat') || lower.includes('belt')) return 'No Seat Belt';
+  if (lower.includes('speed')) return 'Speeding';
+  if (lower.includes('red') || lower.includes('signal')) return 'Red Light Violation';
+  if (lower.includes('phone') || lower.includes('mobile')) return 'Mobile Phone Usage';
+  if (lower.includes('park')) return 'Illegal Parking';
+  if (lower.includes('drunk') || lower.includes('alcohol')) return 'Drunk Driving';
+  if (lower.includes('reckless')) return 'Reckless Driving';
+  return 'Other';
+};
+
+const pickSeverity = (text = '') => {
+  const lower = text.toLowerCase();
+  if (lower.includes('critical') || lower.includes('danger') || lower.includes('drunk') || lower.includes('reckless')) return 'Critical';
+  if (lower.includes('major') || lower.includes('high') || lower.includes('red light')) return 'Major';
+  if (lower.includes('minor') || lower.includes('low')) return 'Minor';
+  return 'Moderate';
+};
+
+const extractOfficerJson = (message = '') => {
+  const raw = String(message || '');
+  const note = raw.split('Officer note:').pop() || raw;
+  const plate = note.match(/[A-Z]{2,4}[-\s]?\d{3,5}/i)?.[0] || '';
+  const phone = note.match(/(?:\+?92|0)?3\d{9}/)?.[0] || '';
+  const speedPair = note.match(/(\d{2,3})\s*(?:in|on|\/)\s*(\d{2,3})\s*(?:zone|limit)?/i);
+  const speedSingle = note.match(/speed(?:ing)?\s*(\d{2,3})/i);
+  const location = note.match(/(?:at|near|on)\s+([a-z0-9\s-]{3,60})(?:,| owner| phone| minor| moderate| major| critical|$)/i)?.[1] || '';
+  const owner = note.match(/owner\s+([a-z\s.]{2,60})(?:,| phone| at| near| on| \d|$)/i)?.[1] || '';
+
+  return {
+    registrationNumber: plate.toUpperCase().replace(/\s+/g, ''),
+    ownerName: owner.trim().replace(/\s+/g, ' '),
+    ownerPhone: phone,
+    violationType: pickViolationType(note),
+    severity: pickSeverity(note),
+    speed: speedPair?.[1] || speedSingle?.[1] || '',
+    speedLimit: speedPair?.[2] || '',
+    locationName: location.trim().replace(/\s+/g, ' '),
+    description: note.trim(),
+  };
+};
+
 const buildLocalFallbackReply = (message, context = {}) => {
+  const rawMessage = String(message || '');
+  const lower = rawMessage.toLowerCase();
+
+  if (lower.includes('return only json') || lower.includes('extract a traffic challan form')) {
+    return JSON.stringify(extractOfficerJson(rawMessage), null, 2);
+  }
+
   const challan = parseChallanFromMessage(message);
   if (challan) {
     const violation = challan.violation?.violationType || challan.ViolationType || challan.DisplayViolationType || 'traffic violation';
@@ -71,8 +122,46 @@ const buildLocalFallbackReply = (message, context = {}) => {
     ].join(' ');
   }
 
+  if (lower.includes('pay')) {
+    return 'To pay a challan, open Public Tracker or Citizen Account, search/select the vehicle, review pending challans, then use the Pay button. After payment, download or print the receipt.';
+  }
+
+  if (lower.includes('appeal')) {
+    return 'To appeal, open Citizen Account, choose the challan, click Appeal, add your reason and evidence, then submit it for officer review.';
+  }
+
+  if (lower.includes('traffic') || lower.includes('critical') || lower.includes('route')) {
+    return 'Traffic levels mean: Low is normal, Medium needs caution, High means delay expected, and Critical means avoid the road if possible. Open Public Traffic Info for the live map and latest alerts.';
+  }
+
+  if (lower.includes('demerit') || lower.includes('license')) {
+    return 'Demerit points are added from violations. At 100 points the license is marked cancelled. Citizens can request a reduction or complete an eligible safety course from Citizen Account.';
+  }
+
+  if (lower.includes('check') && lower.includes('challan')) {
+    return 'Open Public Tracker, enter the vehicle registration number, then press Search. Registered citizens can also view their linked challans in Citizen Account.';
+  }
+
+  if (lower.includes('officer') || lower.includes('violation') || lower.includes('fill')) {
+    return 'Officer workflow: open Officer Dashboard, choose Add Violation, enter vehicle and violation details, review fine and demerit points, then submit to generate the challan.';
+  }
+
   const role = context.role ? ` for ${context.role}` : '';
-  return `I can still help${role}. Gemini is temporarily unavailable, but you can ask about challans, payments, appeals, traffic alerts, or officer workflows.`;
+  return `I can help${role} with challans, payments, appeals, traffic alerts, demerit points, license status, and officer workflows. Ask one specific question and I will guide you.`;
+};
+
+const shouldAnswerLocally = (message = '') => {
+  const lower = String(message || '').toLowerCase();
+  return lower.includes('return only json')
+    || lower.includes('extract a traffic challan form')
+    || lower.includes('challan data:')
+    || lower.includes('how do i pay')
+    || lower.includes('check my challan')
+    || lower.includes('appeal')
+    || lower.includes('demerit')
+    || lower.includes('license')
+    || lower.includes('traffic levels')
+    || lower.includes('critical mean');
 };
 
 exports.askGemini = async (req, res) => {
@@ -80,20 +169,20 @@ exports.askGemini = async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
     const { message, history = [], context = {} } = req.body;
 
-    if (!apiKey) {
-      return res.json({
-        success: true,
-        data: {
-          reply: buildLocalFallbackReply(message, context),
-          model: 'local-fallback',
-        },
-      });
-    }
-
     if (!message || !String(message).trim()) {
       return res.status(400).json({
         success: false,
         message: 'Message is required',
+      });
+    }
+
+    if (!apiKey || shouldAnswerLocally(message)) {
+      return res.json({
+        success: true,
+        data: {
+          reply: buildLocalFallbackReply(message, context),
+          model: 'local-tms',
+        },
       });
     }
 
@@ -132,7 +221,7 @@ exports.askGemini = async (req, res) => {
           'Content-Type': 'application/json',
           'x-goog-api-key': apiKey,
         },
-        timeout: 30000,
+        timeout: 12000,
       }
     );
 

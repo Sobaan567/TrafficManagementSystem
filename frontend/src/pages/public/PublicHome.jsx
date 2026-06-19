@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import GoogleMapReact from 'google-map-react';
 import {
   Bar,
@@ -14,6 +14,8 @@ import {
   YAxis,
 } from 'recharts';
 import api from '../../services/api';
+import SlideDownText from '../../components/common/SlideDownText';
+import AnimatedNumber from '../../components/common/AnimatedNumber';
 import './PublicHome.css';
 
 const LEVEL_COLORS = {
@@ -87,13 +89,39 @@ const PublicHeatPoint = ({ level = 'Low' }) => (
   />
 );
 
+const PublicComplaintPin = ({ complaint }) => (
+  <div className={`public-complaint-pin priority-${String(complaint.priority || 'Medium').toLowerCase()}`}>
+    <span>C</span>
+    <strong>{complaint.trackingCode}</strong>
+  </div>
+);
+
 const getLevelRank = (level) => ({ Low: 1, Medium: 2, High: 3, Critical: 4 }[level] || 1);
 const chartColors = ['#2ECC40', '#FF851B', '#FF3B3B', '#85144b'];
 
 export default function PublicHome() {
+  const { pathname } = useLocation();
   const [situations, setSituations] = useState([]);
+  const [complaintPins, setComplaintPins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [complaintForm, setComplaintForm] = useState({
+    contactName: '',
+    contactPhone: '',
+    contactEmail: '',
+    vehicleRegistrationNumber: '',
+    category: 'Traffic Jam',
+    priority: 'Medium',
+    locationName: '',
+    description: '',
+    evidenceFileName: '',
+    evidenceDataUrl: '',
+  });
+  const [complaintLoading, setComplaintLoading] = useState(false);
+  const [complaintMessage, setComplaintMessage] = useState('');
+  const [trackingCode, setTrackingCode] = useState('');
+  const [trackedComplaint, setTrackedComplaint] = useState(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
 
   const fetchSituations = async () => {
     setLoading(true);
@@ -111,9 +139,105 @@ export default function PublicHome() {
     }
   };
 
+  const fetchComplaintPins = async () => {
+    try {
+      const response = await api.get('/public/complaints/map');
+      if (response.data?.success) setComplaintPins(response.data.data || []);
+    } catch (err) {
+      setComplaintPins([]);
+    }
+  };
+
   useEffect(() => {
     fetchSituations();
+    fetchComplaintPins();
   }, []);
+
+  useEffect(() => {
+    if (!pathname.toLowerCase().includes('complaint')) return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById('public-complaints')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
+
+  const updateComplaintForm = (field, value) => {
+    setComplaintForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleComplaintEvidence = (file) => {
+    if (!file) {
+      setComplaintForm((current) => ({ ...current, evidenceFileName: '', evidenceDataUrl: '' }));
+      return;
+    }
+
+    if (file.size > 300000) {
+      setComplaintMessage('Evidence file should be under 300KB for fast upload.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setComplaintForm((current) => ({
+        ...current,
+        evidenceFileName: file.name,
+        evidenceDataUrl: String(reader.result || ''),
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const submitComplaint = async (event) => {
+    event.preventDefault();
+    setComplaintLoading(true);
+    setComplaintMessage('');
+    try {
+      const response = await api.post('/public/complaints', complaintForm);
+      const saved = response.data?.data;
+      setTrackedComplaint(saved || null);
+      setTrackingCode(saved?.trackingCode || '');
+      setComplaintMessage(`Complaint submitted. Tracking ID: ${saved?.trackingCode || 'created'}.`);
+      setComplaintForm({
+        contactName: '',
+        contactPhone: '',
+        contactEmail: '',
+        vehicleRegistrationNumber: '',
+        category: 'Traffic Jam',
+        priority: 'Medium',
+        locationName: '',
+        description: '',
+        evidenceFileName: '',
+        evidenceDataUrl: '',
+      });
+      fetchComplaintPins();
+    } catch (err) {
+      setComplaintMessage(err.response?.data?.message || 'Complaint could not be submitted.');
+    } finally {
+      setComplaintLoading(false);
+    }
+  };
+
+  const trackComplaint = async (event) => {
+    event.preventDefault();
+    const cleanCode = trackingCode.trim();
+    if (!cleanCode) return;
+    setTrackingLoading(true);
+    setTrackedComplaint(null);
+    setComplaintMessage('');
+    try {
+      const response = await api.get(`/public/complaints/track/${encodeURIComponent(cleanCode)}`);
+      setTrackedComplaint(response.data?.data || null);
+    } catch (err) {
+      setComplaintMessage(err.response?.data?.message || 'Complaint tracking code was not found.');
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
 
   const markers = useMemo(() => situations
     .map((s, index) => {
@@ -125,9 +249,20 @@ export default function PublicHome() {
       } : null;
     })
     .filter(Boolean), [situations]);
+  const complaintMarkers = useMemo(() => complaintPins
+    .map((complaint, index) => {
+      const coords = FALLBACK_LOCATION_COORDS[normalizeLocationKey(complaint.locationName)];
+      return coords ? {
+        ...complaint,
+        id: complaint.trackingCode || `${complaint.complaintId}-${index}`,
+        ...coords,
+      } : null;
+    })
+    .filter(Boolean), [complaintPins]);
 
   const dashboardStats = useMemo(() => {
     const highPriority = situations.filter((s) => ['High', 'Critical'].includes(s.trafficLevel)).length;
+    const urgentComplaints = complaintPins.filter((item) => ['High', 'Critical'].includes(item.priority)).length;
     const worstLevel = situations.reduce((current, item) => (
       getLevelRank(item.trafficLevel) > getLevelRank(current) ? item.trafficLevel : current
     ), 'Low');
@@ -135,21 +270,25 @@ export default function PublicHome() {
     return [
       { label: 'Active Alerts', value: loading ? '...' : error ? 'Offline' : situations.length, detail: error ? 'Backend connection required' : 'Officer reported road updates' },
       { label: 'High Priority', value: loading ? '...' : error ? '-' : highPriority, detail: 'High and critical congestion' },
-      { label: 'City Status', value: loading ? '...' : error ? 'Offline' : worstLevel, detail: 'Highest current traffic level' },
+      { label: 'Smart Risk', value: loading ? '...' : error ? 'Offline' : Math.min(100, (getLevelRank(worstLevel) * 18) + (urgentComplaints * 8)), detail: 'Traffic plus public complaint load' },
       { label: 'Services', value: '24/7', detail: 'Public challan and traffic support' },
     ];
-  }, [error, loading, situations]);
+  }, [complaintPins, error, loading, situations]);
 
   const visibleAlerts = situations.slice(0, 4);
-  const severityScore = Math.min(100, situations.reduce((total, item) => total + (getLevelRank(item.trafficLevel) * 8), 0));
+  const severityScore = Math.min(
+    100,
+    situations.reduce((total, item) => total + (getLevelRank(item.trafficLevel) * 8), 0)
+      + complaintPins.reduce((total, item) => total + (item.priority === 'Critical' ? 8 : item.priority === 'High' ? 6 : 2), 0)
+  );
   const hotZones = [...situations]
     .sort((a, b) => getLevelRank(b.trafficLevel) - getLevelRank(a.trafficLevel))
     .slice(0, 3);
-  const mapCenter = markers[0] ? { lat: markers[0].lat, lng: markers[0].lng } : defaultCenter;
+  const mapCenter = markers[0] ? { lat: markers[0].lat, lng: markers[0].lng } : complaintMarkers[0] ? { lat: complaintMarkers[0].lat, lng: complaintMarkers[0].lng } : defaultCenter;
   const commandMetrics = [
-    { label: 'Map Pins', value: markers.length, detail: 'verified points' },
+    { label: 'Map Pins', value: markers.length + complaintMarkers.length, detail: 'traffic and complaint points' },
     { label: 'Route Risk', value: severityScore > 55 ? 'High' : severityScore > 20 ? 'Watch' : 'Clear', detail: 'city movement index' },
-    { label: 'Citizen Mode', value: 'Open', detail: 'no login required' },
+    { label: 'Complaint Feed', value: complaintPins.length, detail: 'open citizen reports' },
   ];
   const trafficLevelData = ['Low', 'Medium', 'High', 'Critical'].map((level) => ({
     name: level,
@@ -166,7 +305,7 @@ export default function PublicHome() {
       <section className="public-hero">
         <div className="public-hero-copy">
           <span className="public-kicker">Citizen Traffic Portal</span>
-          <h1>Public Dashboard</h1>
+          <h1><SlideDownText text="Public Dashboard" /></h1>
           <p>
             Live traffic conditions, challan lookup, route awareness, and public safety updates in one place.
           </p>
@@ -180,14 +319,14 @@ export default function PublicHome() {
         <div className="public-status-board">
           <div className="status-board-header">
             <span>Current Network</span>
-            <strong>{loading ? 'Syncing' : `${situations.length} alerts`}</strong>
+            <strong><AnimatedNumber value={loading ? 'Syncing' : `${situations.length} alerts`} /></strong>
           </div>
           <div className="signal-list">
             {['Low', 'Medium', 'High', 'Critical'].map((level) => (
               <div key={level} className="signal-row">
                 <span className="signal-dot" style={{ backgroundColor: LEVEL_COLORS[level] }} />
                 <span>{level}</span>
-                <strong>{situations.filter((s) => s.trafficLevel === level).length}</strong>
+                <strong><AnimatedNumber value={situations.filter((s) => s.trafficLevel === level).length} /></strong>
               </div>
             ))}
           </div>
@@ -198,7 +337,7 @@ export default function PublicHome() {
         {dashboardStats.map((stat) => (
           <article key={stat.label} className="public-stat-card">
             <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
+            <strong><AnimatedNumber value={stat.value} /></strong>
             <p>{stat.detail}</p>
           </article>
         ))}
@@ -258,7 +397,7 @@ export default function PublicHome() {
       <section className="public-intel-runway">
         <div className="intel-score">
           <span>City Severity</span>
-          <strong>{loading ? '...' : severityScore}</strong>
+          <strong><AnimatedNumber value={loading ? '...' : severityScore} /></strong>
           <div className="intel-score-bar"><i style={{ width: `${severityScore}%` }} /></div>
         </div>
         <div className="intel-copy">
@@ -293,11 +432,94 @@ export default function PublicHome() {
           {commandMetrics.map((metric) => (
             <article key={metric.label}>
               <span>{metric.label}</span>
-              <strong>{metric.value}</strong>
+              <strong><AnimatedNumber value={metric.value} /></strong>
               <small>{metric.detail}</small>
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="public-complaint-desk" id="public-complaints">
+        <div className="complaint-desk-copy">
+          <span>Complaint Desk</span>
+          <h2>Report a road problem fast</h2>
+          <p>Send signal faults, road issues, officer conduct concerns, challan problems, or unsafe congestion directly into the staff inbox.</p>
+          <form className="complaint-track-form" onSubmit={trackComplaint}>
+            <input
+              value={trackingCode}
+              onChange={(event) => setTrackingCode(event.target.value.toUpperCase())}
+              placeholder="CMP-00001"
+            />
+            <button type="submit" disabled={trackingLoading || !trackingCode.trim()}>
+              {trackingLoading ? 'Checking...' : 'Track'}
+            </button>
+          </form>
+          {trackedComplaint && (
+            <div className="complaint-track-card">
+              <span>{trackedComplaint.trackingCode}</span>
+              <strong>{trackedComplaint.status}</strong>
+              <p>{trackedComplaint.category} at {trackedComplaint.locationName || 'reported location'}</p>
+              {trackedComplaint.officerNote && <em>{trackedComplaint.officerNote}</em>}
+            </div>
+          )}
+        </div>
+        <form className="complaint-desk-form" onSubmit={submitComplaint}>
+          <div className="complaint-form-grid">
+            <input
+              value={complaintForm.contactName}
+              onChange={(event) => updateComplaintForm('contactName', event.target.value)}
+              placeholder="Your name"
+              required
+            />
+            <input
+              value={complaintForm.contactPhone}
+              onChange={(event) => updateComplaintForm('contactPhone', event.target.value)}
+              placeholder="Phone"
+            />
+            <input
+              type="email"
+              value={complaintForm.contactEmail}
+              onChange={(event) => updateComplaintForm('contactEmail', event.target.value)}
+              placeholder="Email"
+            />
+            <input
+              value={complaintForm.vehicleRegistrationNumber}
+              onChange={(event) => updateComplaintForm('vehicleRegistrationNumber', event.target.value.toUpperCase())}
+              placeholder="Vehicle number"
+            />
+            <select value={complaintForm.category} onChange={(event) => updateComplaintForm('category', event.target.value)}>
+              {['Traffic Jam', 'Signal Issue', 'Road Condition', 'Wrong Challan', 'Officer Conduct', 'Other'].map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+            <select value={complaintForm.priority} onChange={(event) => updateComplaintForm('priority', event.target.value)}>
+              {['Low', 'Medium', 'High', 'Critical'].map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+          </div>
+          <input
+            value={complaintForm.locationName}
+            onChange={(event) => updateComplaintForm('locationName', event.target.value)}
+            placeholder="Location or road name"
+          />
+          <textarea
+            value={complaintForm.description}
+            onChange={(event) => updateComplaintForm('description', event.target.value)}
+            placeholder="Describe what happened..."
+            rows="4"
+            required
+          />
+          <label className="complaint-evidence-field">
+            Evidence photo <span>optional</span>
+            <input type="file" accept="image/*" onChange={(event) => handleComplaintEvidence(event.target.files?.[0])} />
+          </label>
+          {complaintForm.evidenceFileName && <small className="complaint-evidence-name">{complaintForm.evidenceFileName}</small>}
+          {complaintMessage && <strong className="complaint-message">{complaintMessage}</strong>}
+          <button type="submit" disabled={complaintLoading || !complaintForm.description.trim()}>
+            {complaintLoading ? 'Submitting...' : 'Submit Complaint'}
+          </button>
+        </form>
       </section>
 
       <section className="public-main-grid">
@@ -322,6 +544,14 @@ export default function PublicHome() {
               ))}
               {(markers.length ? markers : [{ id: 'default', ...defaultCenter, trafficLevel: 'Low' }]).map((s) => (
                 <PublicMapMarker key={`pin-${s.id}`} lat={s.lat} lng={s.lng} level={s.trafficLevel} />
+              ))}
+              {complaintMarkers.map((complaint) => (
+                <PublicComplaintPin
+                  key={`complaint-${complaint.id}`}
+                  lat={complaint.lat}
+                  lng={complaint.lng}
+                  complaint={complaint}
+                />
               ))}
             </GoogleMapReact>
           </div>
@@ -363,6 +593,28 @@ export default function PublicHome() {
             </div>
           )}
         </aside>
+      </section>
+
+      <section className="public-live-timeline">
+        <div>
+          <span>Live Activity</span>
+          <h2>City Pulse Timeline</h2>
+        </div>
+        {[...complaintPins.slice(0, 3).map((item) => ({
+          title: item.trackingCode,
+          body: `${item.priority} ${item.category} complaint at ${item.locationName || 'reported area'}`,
+          time: item.createdAt,
+        })), ...visibleAlerts.slice(0, 3).map((item) => ({
+          title: item.trafficLevel,
+          body: `${item.locationName} traffic update: ${item.description}`,
+          time: item.reportedAt,
+        }))].slice(0, 5).map((item, index) => (
+          <article key={`${item.title}-${index}`}>
+            <strong>{item.title}</strong>
+            <p>{item.body}</p>
+            <small>{new Date(item.time || Date.now()).toLocaleString()}</small>
+          </article>
+        ))}
       </section>
 
       <section className="public-services">

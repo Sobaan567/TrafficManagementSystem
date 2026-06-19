@@ -20,6 +20,7 @@ const normalizeChallan = (challan) => {
     challanNumber: getField(challan, 'ChallanNumber', 'challanNumber') || '-',
     vehicleNumber: getField(challan, 'RegistrationNumber', 'vehicleNumber', 'VehicleID') || '-',
     violationType: getField(challan, 'DisplayViolationType', 'ViolationType', 'violationType') || '-',
+    demeritPoints: Number(getField(challan, 'DemeritPoints', 'demeritPoints') || 0),
     fineAmount: Number(getField(challan, 'FineAmount', 'fineAmount') || 0),
     paymentStatus,
     challanStatus,
@@ -61,6 +62,7 @@ const printChallan = (challan) => {
             <tr><td>Owner</td><td>${challan.ownerName}</td></tr>
             <tr><td>Phone</td><td>${challan.ownerPhone}</td></tr>
             <tr><td>Violation</td><td>${challan.violationType}</td></tr>
+            <tr><td>Demerit Points</td><td>${challan.demeritPoints}</td></tr>
             <tr><td>Location</td><td>${challan.location}</td></tr>
             <tr><td>Issue Date</td><td>${new Date(challan.issueDate).toLocaleString()}</td></tr>
             <tr><td>Payment Status</td><td>${challan.paymentStatus}</td></tr>
@@ -89,6 +91,7 @@ const downloadReceipt = (challan) => {
     `Owner: ${challan.ownerName}`,
     `Phone: ${challan.ownerPhone}`,
     `Violation: ${challan.violationType}`,
+    `Demerit Points: ${challan.demeritPoints}`,
     `Location: ${challan.location}`,
     `Issue Date: ${new Date(challan.issueDate).toLocaleString()}`,
     `Payment Status: ${challan.paymentStatus}`,
@@ -128,6 +131,7 @@ const ChallanList = ({ challans = [] }) => {
               <th>Challan #</th>
               <th>Vehicle</th>
               <th>Violation</th>
+              <th>Demerits</th>
               <th>Amount</th>
               <th>Status</th>
               <th>Date</th>
@@ -137,7 +141,7 @@ const ChallanList = ({ challans = [] }) => {
           <tbody>
             {rows.length === 0 ? (
               <tr className="no-data">
-                <td colSpan="7">No challans found. Add a violation or refresh the officer dashboard.</td>
+                <td colSpan="8">No challans found. Add a violation or refresh the officer dashboard.</td>
               </tr>
             ) : (
               rows.map((challan) => (
@@ -145,6 +149,7 @@ const ChallanList = ({ challans = [] }) => {
                   <td className="challan-id">{challan.challanNumber}</td>
                   <td>{challan.vehicleNumber}</td>
                   <td>{challan.violationType}</td>
+                  <td><span className="demerit-badge">{challan.demeritPoints}</span></td>
                   <td className="amount">{formatCurrency(challan.fineAmount)}</td>
                   <td>
                     <span className={`status-badge ${statusClass(challan.paymentStatus)}`}>
@@ -175,6 +180,7 @@ const ChallanList = ({ challans = [] }) => {
               <div><span>Owner</span><strong>{selectedChallan.ownerName}</strong></div>
               <div><span>Phone</span><strong>{selectedChallan.ownerPhone}</strong></div>
               <div><span>Violation</span><strong>{selectedChallan.violationType}</strong></div>
+              <div><span>Demerit Points</span><strong>{selectedChallan.demeritPoints}</strong></div>
               <div><span>Location</span><strong>{selectedChallan.location}</strong></div>
               <div><span>Issue Date</span><strong>{new Date(selectedChallan.issueDate).toLocaleString()}</strong></div>
               <div><span>Payment</span><strong>{selectedChallan.paymentStatus}</strong></div>

@@ -1,0 +1,53 @@
+.challan-qr-card {
+  align-items: center;
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.05) 1px, transparent 1px),
+    #fffdf4;
+  background-size: 16px 16px;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #09090B;
+  color: #09090B;
+  display: inline-grid;
+  gap: 7px;
+  justify-items: center;
+  padding: 10px;
+  width: calc(var(--qr-size) + 24px);
+}
+
+.challan-qr-card span,
+.challan-qr-card strong {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 1000;
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.challan-qr-card span {
+  background: #09090B;
+  border-radius: 999px;
+  color: #D2E823;
+  padding: 5px 8px;
+}
+
+.challan-qr-card img,
+.challan-qr-fallback {
+  border: 2px solid #09090B;
+  border-radius: 6px;
+  display: block;
+  height: var(--qr-size);
+  width: var(--qr-size);
+}
+
+.challan-qr-fallback {
+  background:
+    linear-gradient(45deg, #09090B 25%, transparent 25% 50%, #09090B 50% 75%, transparent 75%),
+    #fffdf4;
+  background-size: 14px 14px;
+}

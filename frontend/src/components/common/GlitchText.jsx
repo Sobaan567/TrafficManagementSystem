@@ -1,11 +1,8 @@
 import React from 'react';
+import SlideDownText from './SlideDownText';
 
 const GlitchText = ({ text, className = '' }) => {
-  return (
-    <span className={`glitch-text ${className}`}>
-      {text}
-    </span>
-  );
+  return <SlideDownText text={text} className={`glitch-text ${className}`} />;
 };
 
 export default GlitchText;

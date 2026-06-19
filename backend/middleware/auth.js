@@ -38,6 +38,23 @@ const authenticate = (req, res, next) => {
   }
 };
 
+const optionalAuthenticate = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.substring(7);
+    req.user = jwt.verify(token, JWT_SECRET);
+    return next();
+  } catch (error) {
+    req.user = null;
+    return next();
+  }
+};
+
 /**
  * Authorize middleware - Check user role
  */
@@ -63,5 +80,6 @@ const authorize = (...allowedRoles) => {
 
 module.exports = {
   authenticate,
+  optionalAuthenticate,
   authorize,
 };

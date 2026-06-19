@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Bar,
   BarChart,
@@ -15,6 +16,8 @@ import {
   YAxis,
 } from 'recharts';
 import api from '../services/api';
+import SlideDownText from '../components/common/SlideDownText';
+import AnimatedNumber from '../components/common/AnimatedNumber';
 import './AdminDashboard.css';
 
 const emptyForm = {
@@ -38,6 +41,13 @@ const emptyForm = {
 const sum = (rows, key = 'Count') => rows.reduce((total, row) => total + Number(row[key] || 0), 0);
 const money = (value) => `Rs.${Number(value || 0).toLocaleString()}`;
 const chartColors = ['#D2E823', '#09090B', '#FF851B', '#FF3B3B', '#38bdf8', '#85144b'];
+const emptySmartOverview = {
+  summary: {},
+  congestionPredictions: [],
+  deploymentRecommendations: [],
+  demeritLeaders: [],
+  dailyBriefing: [],
+};
 
 export default function AdminDashboard() {
   const [overview, setOverview] = useState({
@@ -59,17 +69,32 @@ export default function AdminDashboard() {
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState(emptyForm);
+  const [complaints, setComplaints] = useState([]);
+  const [complaintNotes, setComplaintNotes] = useState({});
+  const [complaintsLoading, setComplaintsLoading] = useState(false);
+  const [smartOverview, setSmartOverview] = useState(emptySmartOverview);
 
   const fetchAll = async () => {
     setLoading(true);
     setError('');
     try {
-      const [overviewResponse, usersResponse] = await Promise.all([
+      const [overviewResult, usersResult, complaintsResult, smartResult] = await Promise.allSettled([
         api.get('/admin/overview'),
         api.get('/admin/users'),
+        api.get('/public/officer/complaints'),
+        api.get('/smart/overview'),
       ]);
-      if (overviewResponse.data.success) setOverview(overviewResponse.data.data);
-      if (usersResponse.data.success) setUsers(usersResponse.data.data || []);
+      const overviewResponse = overviewResult.status === 'fulfilled' ? overviewResult.value : null;
+      const usersResponse = usersResult.status === 'fulfilled' ? usersResult.value : null;
+      const complaintsResponse = complaintsResult.status === 'fulfilled' ? complaintsResult.value : null;
+      const smartResponse = smartResult.status === 'fulfilled' ? smartResult.value : null;
+      if (overviewResponse?.data?.success) setOverview(overviewResponse.data.data);
+      if (usersResponse?.data?.success) setUsers(usersResponse.data.data || []);
+      if (complaintsResponse?.data?.success) setComplaints(complaintsResponse.data.data || []);
+      if (smartResponse?.data?.success) setSmartOverview({ ...emptySmartOverview, ...smartResponse.data.data });
+      if (!overviewResponse || !usersResponse) {
+        setError('Could not load all admin management data.');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Could not load admin management data.');
     } finally {
@@ -84,7 +109,8 @@ export default function AdminDashboard() {
     { label: 'Officers', value: users.filter((user) => user.role === 'Officer').length, detail: 'field operators' },
     { label: 'Citizens', value: users.filter((user) => user.role === 'Public').length, detail: 'public accounts' },
     { label: 'Appeals', value: sum(overview.appeals), detail: 'citizen cases' },
-  ], [overview, users]);
+    { label: 'Complaints', value: complaints.filter((item) => ['Open', 'In Review'].includes(item.status)).length, detail: 'open public reports' },
+  ], [complaints, overview, users]);
 
   const roleCounts = useMemo(() => ['Admin', 'Officer', 'Public', 'Supervisor'].map((role) => ({
     role,
@@ -119,6 +145,31 @@ export default function AdminDashboard() {
     count: Number(item.Count || 0),
     amount: Number(item.Amount || 0),
   }));
+  const totalPaymentCases = paidCount + unpaidCount;
+  const collectionRate = totalPaymentCases ? Math.round((paidCount / totalPaymentCases) * 100) : 0;
+  const citizenShare = users.length ? Math.round((users.filter((user) => user.role === 'Public').length / users.length) * 100) : 0;
+  const topViolation = violationData.length
+    ? [...violationData].sort((a, b) => b.count - a.count)[0]
+    : null;
+  const adminInsights = [
+    { label: 'Collection Rate', value: `${collectionRate}%`, detail: 'paid challan closure' },
+    { label: 'Citizen Share', value: `${citizenShare}%`, detail: 'public account ratio' },
+    { label: 'Top Violation', value: topViolation?.type || 'None', detail: topViolation ? `${topViolation.count} records` : 'no records yet' },
+    { label: 'System Load', value: loading ? 'Syncing' : 'Stable', detail: `${overview.activity.length || 0} recent events` },
+  ];
+  const smartSummary = smartOverview.summary || {};
+  const topDemeritDriver = smartOverview.demeritLeaders?.[0];
+  const topDeploymentZone = smartOverview.deploymentRecommendations?.[0];
+  const smartCommandCards = [
+    { label: 'Active Incidents', value: smartSummary.activeIncidents ?? 0, detail: 'smart reports open' },
+    { label: 'Hot Zones', value: smartSummary.highRiskZones ?? 0, detail: smartSummary.topHotZone || 'no hot zone yet' },
+    { label: 'Demerit Limit', value: smartSummary.demeritLimit ?? 100, detail: 'license cancellation cap' },
+    {
+      label: 'Highest Driver Risk',
+      value: topDemeritDriver ? `${topDemeritDriver.TotalPoints}` : 0,
+      detail: topDemeritDriver ? topDemeritDriver.RegistrationNumber : 'no ledger entries',
+    },
+  ];
 
   const filteredUsers = users.filter((user) => {
     const roleMatch = filter === 'All' || user.role === filter;
@@ -177,15 +228,37 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateComplaintStatus = async (complaint, status) => {
+    setComplaintsLoading(true);
+    setMessage('');
+    setError('');
+    try {
+      await api.put(`/public/officer/complaints/${complaint.complaintId}`, {
+        status,
+        priority: complaint.priority || 'Medium',
+        officerNote: complaintNotes[complaint.complaintId] || complaint.officerNote || '',
+      });
+      await fetchAll();
+      setMessage(`Complaint ${complaint.complaintId} marked ${status}.`);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not update complaint.');
+    } finally {
+      setComplaintsLoading(false);
+    }
+  };
+
   return (
     <div className="admin-page">
       <section className="admin-hero">
         <div>
           <span>Admin Management</span>
-          <h1>Control Center</h1>
-          <p>Separate admin dashboard for managing officers, citizens, admins, accounts, roles, and system activity.</p>
+          <h1><SlideDownText text="Control Center" /></h1>
+          <p>Separate admin dashboard for accounts, challans, appeals, demerit risk, complaints, and live smart operations.</p>
         </div>
-        <button type="button" onClick={fetchAll} disabled={loading}>{loading ? 'Syncing...' : 'Refresh'}</button>
+        <div className="admin-hero-actions">
+          <Link to="/smart-features">Smart Features</Link>
+          <button type="button" onClick={fetchAll} disabled={loading}>{loading ? 'Syncing...' : 'Refresh'}</button>
+        </div>
       </section>
 
       {error && <div className="admin-error">{error}</div>}
@@ -195,7 +268,7 @@ export default function AdminDashboard() {
         {cards.map((card) => (
           <article key={card.label}>
             <span>{card.label}</span>
-            <strong>{loading ? '...' : card.value}</strong>
+            <strong><AnimatedNumber value={loading ? '...' : card.value} /></strong>
             <small>{card.detail}</small>
           </article>
         ))}
@@ -204,26 +277,76 @@ export default function AdminDashboard() {
       <section className="admin-command-strip">
         <div className="admin-command-core">
           <span>Access Control</span>
-          <strong>{activeUsers}</strong>
+          <strong><AnimatedNumber value={activeUsers} /></strong>
           <small>active accounts</small>
         </div>
         <div className="admin-role-radar">
           {roleCounts.map((item, index) => (
             <article key={item.role} className={`role-${index}`}>
               <span>{item.role}</span>
-              <strong>{item.count}</strong>
+              <strong><AnimatedNumber value={item.count} /></strong>
             </article>
           ))}
         </div>
         <div className="admin-command-alert">
           <span>Inactive Watch</span>
-          <strong>{inactiveUsers}</strong>
+          <strong><AnimatedNumber value={inactiveUsers} /></strong>
           <small>disabled or paused accounts</small>
         </div>
       </section>
 
+      <section className="admin-intelligence-strip">
+        <div className="admin-intelligence-title">
+          <span>System Intelligence</span>
+          <h2>Operational health at a glance</h2>
+        </div>
+        <div className="admin-intelligence-grid">
+          {adminInsights.map((item) => (
+            <article key={item.label}>
+              <span>{item.label}</span>
+              <strong title={item.value}><AnimatedNumber value={item.value} /></strong>
+              <small>{item.detail}</small>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="admin-smart-command">
+        <div className="admin-smart-head">
+          <span>Smart Command</span>
+          <h2>Demerits, hot zones, and response priorities</h2>
+          <p>{topDeploymentZone ? `${topDeploymentZone.locationName}: ${topDeploymentZone.reason}` : 'Smart recommendations will appear after challan and incident activity builds up.'}</p>
+        </div>
+        <div className="admin-smart-cards">
+          {smartCommandCards.map((item) => (
+            <article key={item.label}>
+              <span>{item.label}</span>
+              <strong title={String(item.value)}><AnimatedNumber value={loading ? '...' : item.value} /></strong>
+              <small>{item.detail}</small>
+            </article>
+          ))}
+        </div>
+        <div className="admin-smart-lists">
+          <article>
+            <h3>Demerit Watchlist</h3>
+            {(smartOverview.demeritLeaders || []).slice(0, 4).length === 0 ? (
+              <p>No drivers have demerit points yet.</p>
+            ) : (smartOverview.demeritLeaders || []).slice(0, 4).map((driver) => (
+              <div key={driver.RegistrationNumber}>
+                <strong>{driver.RegistrationNumber}</strong>
+                <span>{driver.TotalPoints}/100 pts</span>
+              </div>
+            ))}
+          </article>
+          <article>
+            <h3>Daily Briefing</h3>
+            {(smartOverview.dailyBriefing || []).slice(0, 4).map((line) => <p key={line}>{line}</p>)}
+          </article>
+        </div>
+      </section>
+
       <nav className="admin-tabs">
-        {['overview', 'manage', 'activity'].map((tab) => (
+        {['overview', 'manage', 'complaints', 'activity'].map((tab) => (
           <button key={tab} type="button" className={activeTab === tab ? 'active' : ''} onClick={() => setActiveTab(tab)}>
             {tab === 'manage' ? 'Manage Users' : tab}
           </button>
@@ -235,22 +358,22 @@ export default function AdminDashboard() {
           <section className="admin-report-hero">
             <article>
               <span>Collected</span>
-              <strong>{money(collectedAmount)}</strong>
+              <strong><AnimatedNumber value={money(collectedAmount)} /></strong>
               <small>paid challan value</small>
             </article>
             <article>
               <span>Pending</span>
-              <strong>{money(pendingAmount)}</strong>
+              <strong><AnimatedNumber value={money(pendingAmount)} /></strong>
               <small>unpaid and partial value</small>
             </article>
             <article>
               <span>Paid Cases</span>
-              <strong>{paidCount}</strong>
+              <strong><AnimatedNumber value={paidCount} /></strong>
               <small>closed payment records</small>
             </article>
             <article>
               <span>Open Cases</span>
-              <strong>{unpaidCount}</strong>
+              <strong><AnimatedNumber value={unpaidCount} /></strong>
               <small>needs recovery action</small>
             </article>
           </section>
@@ -467,6 +590,45 @@ export default function AdminDashboard() {
               ))}
             </div>
           </article>
+        </section>
+      )}
+
+      {activeTab === 'complaints' && (
+        <section className="admin-panel admin-complaints-panel">
+          <div className="admin-panel-heading">
+            <div>
+              <h2>Public Complaints</h2>
+              <p>Review citizen reports and route them to the right action.</p>
+            </div>
+          </div>
+          <div className="admin-complaint-grid">
+            {complaints.length === 0 ? <p>No complaints submitted yet.</p> : complaints.map((complaint) => (
+              <article key={complaint.complaintId} className={`admin-complaint-card ${String(complaint.status || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                <div className="admin-complaint-top">
+                  <span>{complaint.status}</span>
+                  <strong>{complaint.category}</strong>
+                  <small>{complaint.priority} priority</small>
+                </div>
+                <p>{complaint.description}</p>
+                <dl>
+                  <div><dt>Citizen</dt><dd>{complaint.contactName}</dd></div>
+                  <div><dt>Vehicle</dt><dd>{complaint.vehicleRegistrationNumber || '-'}</dd></div>
+                  <div><dt>Location</dt><dd>{complaint.locationName || '-'}</dd></div>
+                  <div><dt>Phone</dt><dd>{complaint.contactPhone || '-'}</dd></div>
+                </dl>
+                <textarea
+                  value={complaintNotes[complaint.complaintId] ?? complaint.officerNote ?? ''}
+                  onChange={(event) => setComplaintNotes((current) => ({ ...current, [complaint.complaintId]: event.target.value }))}
+                  placeholder="Admin note..."
+                />
+                <div className="admin-complaint-actions">
+                  <button type="button" onClick={() => updateComplaintStatus(complaint, 'In Review')} disabled={complaintsLoading}>Review</button>
+                  <button type="button" onClick={() => updateComplaintStatus(complaint, 'Resolved')} disabled={complaintsLoading}>Resolve</button>
+                  <button type="button" onClick={() => updateComplaintStatus(complaint, 'Dismissed')} disabled={complaintsLoading}>Dismiss</button>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
       )}
 

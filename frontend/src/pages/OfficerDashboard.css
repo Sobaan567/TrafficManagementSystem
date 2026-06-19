@@ -14,6 +14,16 @@
 
 .dashboard-header {
   margin-bottom: var(--spacing-3xl);
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    #09090B;
+  background-size: 28px 28px;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #D2E823;
+  color: #F8F4E8;
+  padding: clamp(24px, 4vw, 42px);
 }
 
 .header-content {
@@ -30,7 +40,7 @@
 }
 
 .header-subtitle {
-  color: #666;
+  color: #d8d3c4;
   font-size: 1rem;
   margin: 0;
 }
@@ -60,11 +70,10 @@
 }
 
 .stat-card {
-  background-color: var(--color-bg);
-  border: var(--border-size) solid var(--color-primary);
-  border-radius: var(--border-radius);
+  border: 3px solid var(--color-primary);
+  border-radius: 8px;
   padding: var(--spacing-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: 6px 6px 0 #09090B;
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
@@ -102,7 +111,7 @@
 .stat-number {
   font-size: 3rem;
   font-weight: 900;
-  color: var(--color-accent);
+  color: var(--color-primary);
   margin: var(--spacing-sm) 0;
   font-family: var(--font-display);
 }
@@ -227,7 +236,7 @@
 .officer-quick-grid {
   display: grid;
   gap: var(--spacing-lg);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   margin-bottom: var(--spacing-3xl);
 }
 
@@ -240,7 +249,10 @@
   border: var(--border-size) solid #09090B;
   border-radius: 8px;
   box-shadow: 6px 6px 0 #09090B;
-  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  min-height: 255px;
+  min-width: 0;
   padding: 22px;
   position: relative;
   overflow: hidden;
@@ -258,18 +270,22 @@
 }
 
 .officer-quick-card.live {
-  background-color: #E7F8E8;
+  background-color: #09090B;
 }
 
 .officer-quick-card.alert {
-  background-color: #FFE7C2;
+  background-color: #fffdf4;
 }
 
 .officer-quick-card.map {
+  background-color: #09090B;
+}
+
+.officer-quick-card.complaint {
   background-color: #D2E823;
 }
 
-.officer-quick-card span {
+.officer-quick-card > span {
   background: #09090B;
   color: #D2E823;
   display: inline-block;
@@ -279,29 +295,85 @@
   text-transform: uppercase;
 }
 
-.officer-quick-card strong {
+.officer-quick-card > strong {
   display: block;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3.3rem);
+  font-size: clamp(2.3rem, 3.2vw, 4rem);
   line-height: 0.9;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.officer-quick-card strong .animated-number {
+  background: transparent !important;
+  color: inherit !important;
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-transform: none !important;
+}
+
+.officer-quick-card .officer-appeal-count {
+  color: #09090B !important;
+  font-size: clamp(3rem, 6vw, 5rem) !important;
+  line-height: 0.82;
+  text-shadow: 3px 3px 0 #D2E823;
+}
+
+.officer-quick-meta {
+  color: #5a5a54;
+  display: block;
+  font-weight: 1000;
+  margin-top: 8px;
+  text-transform: uppercase;
 }
 
 .officer-quick-card p {
-  color: #333;
+  color: #d8d3c4;
   font-weight: 800;
   margin: 14px 0 18px;
 }
 
+.officer-quick-card.alert p,
+.officer-quick-card.complaint p {
+  color: #333;
+}
+
 .officer-quick-card button {
+  align-items: center;
   background: #09090B;
   border: 2px solid #09090B;
   border-radius: 8px;
+  box-shadow: 4px 4px 0 #D2E823;
   color: #F8F4E8;
   cursor: pointer;
+  display: inline-flex;
   font-family: inherit;
+  gap: 8px;
   font-weight: 900;
+  justify-content: center;
+  margin-top: auto;
   padding: 10px 14px;
   text-transform: uppercase;
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  width: fit-content;
+}
+
+.officer-quick-card button::after {
+  content: ">";
+  color: #D2E823;
+}
+
+.officer-quick-card button:hover {
+  background: #D2E823;
+  box-shadow: 2px 2px 0 #09090B;
+  color: #09090B;
+  transform: translate(2px, 2px);
+}
+
+.officer-quick-card button:hover::after {
+  color: #09090B;
 }
 
 .command-signal-grid span,
@@ -327,37 +399,59 @@
    ============================================================================ */
 
 .tabs-navigation {
-  display: flex;
-  gap: var(--spacing-md);
-  border-bottom: var(--border-size) solid var(--color-primary);
-  padding-bottom: var(--spacing-md);
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.055) 1px, transparent 1px),
+    #fffdf4;
+  background-size: 22px 22px;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 7px 7px 0 #09090B;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
   flex-wrap: wrap;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  overflow: hidden;
+  padding: 12px;
+  position: relative;
 }
 
 .tab-button {
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: var(--color-primary);
+  align-items: center;
+  background: #F8F4E8;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #09090B;
+  color: #09090B;
+  display: inline-flex;
   font-family: var(--font-display);
-  font-size: 0.9rem;
+  font-size: clamp(0.72rem, 1vw, 0.92rem);
+  justify-content: center;
+  letter-spacing: 0;
+  min-height: 52px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 10px 12px;
+  text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background-color 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
   position: relative;
 }
 
 .tab-button:hover {
-  color: var(--color-accent);
-  transform: translateY(-2px);
+  background: #D2E823;
+  color: #09090B;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #09090B;
 }
 
 .tab-button.active {
-  color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
+  background: #09090B;
+  border-color: #D2E823;
+  box-shadow: 4px 4px 0 #D2E823;
+  color: #D2E823;
 }
 
 /* ============================================================================
@@ -462,7 +556,26 @@
   resize: vertical;
 }
 
-.officer-ai-fill button {
+.officer-ai-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.officer-ai-presets button {
+  background: #F8F4E8;
+  border: 2px solid #D2E823;
+  border-radius: 8px;
+  color: #09090B;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 8px 10px;
+  text-transform: uppercase;
+}
+
+.officer-ai-fill > button {
   background: #D2E823;
   border: 2px solid #F8F4E8;
   border-radius: 8px;
@@ -577,6 +690,18 @@
   background: #FFF1D8;
 }
 
+.officer-appeal-card.complaint-resolved {
+  background: #E7F8E8;
+}
+
+.officer-appeal-card.complaint-dismissed {
+  background: #FFE3DF;
+}
+
+.officer-appeal-card.complaint-in-review {
+  background: #FFF1D8;
+}
+
 .officer-appeal-top {
   align-items: flex-start;
   display: flex;
@@ -688,6 +813,16 @@
 
 .officer-appeal-actions button:nth-child(3) {
   background: #fff;
+}
+
+.officer-complaints-panel .officer-appeal-actions button:nth-child(2) {
+  background: #2ECC40;
+  color: #09090B;
+}
+
+.officer-complaints-panel .officer-appeal-actions button:nth-child(3) {
+  background: #FF3B3B;
+  color: #fff;
 }
 
 .officer-activity-panel {
@@ -807,4 +942,134 @@
   .scene-3d-container {
     min-height: 350px;
   }
+}
+
+/* Final officer console polish: keep quick cards and tabs clean over global skins. */
+.officer-dashboard .officer-quick-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  overflow: visible;
+}
+
+.officer-dashboard .officer-quick-card {
+  border: 3px solid #09090B !important;
+  border-radius: 8px !important;
+  box-shadow: 8px 8px 0 #09090B !important;
+  min-height: 270px;
+  padding: clamp(20px, 2.2vw, 28px) !important;
+}
+
+.officer-dashboard .officer-quick-card::after {
+  background: #D2E823 !important;
+  border: 3px solid #09090B !important;
+  border-radius: 0 !important;
+  height: 48px !important;
+  right: -38px !important;
+  top: -18px !important;
+  transform: rotate(12deg) !important;
+  width: 132px !important;
+}
+
+.officer-dashboard .officer-quick-card.live,
+.officer-dashboard .officer-quick-card.map {
+  background:
+    radial-gradient(circle at 74% 62%, rgba(210, 232, 35, 0.18), transparent 32%),
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    #09090B !important;
+  background-size: auto, 24px 24px, 24px 24px, auto !important;
+  color: #F8F4E8 !important;
+}
+
+.officer-dashboard .officer-quick-card.alert {
+  background:
+    radial-gradient(circle at 82% 20%, rgba(210, 232, 35, 0.28), transparent 26%),
+    linear-gradient(rgba(9, 9, 11, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.055) 1px, transparent 1px),
+    #fffdf4 !important;
+  background-size: auto, 24px 24px, 24px 24px, auto !important;
+  color: #09090B !important;
+}
+
+.officer-dashboard .officer-quick-card.complaint {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.075) 1px, transparent 1px),
+    #D2E823 !important;
+  background-size: 24px 24px !important;
+  color: #09090B !important;
+}
+
+.officer-dashboard .officer-quick-card > span {
+  background: #09090B !important;
+  color: #D2E823 !important;
+  display: inline-block !important;
+  font-size: 0.88rem;
+  margin: 0 0 20px !important;
+  max-width: calc(100% - 58px);
+  padding: 8px 10px !important;
+}
+
+.officer-dashboard .officer-quick-card > strong {
+  color: inherit !important;
+  font-size: clamp(2.4rem, 3.2vw, 4.1rem) !important;
+  line-height: 0.86 !important;
+  text-shadow: 3px 3px 0 rgba(210, 232, 35, 0.28) !important;
+}
+
+.officer-dashboard .officer-quick-card.alert > strong,
+.officer-dashboard .officer-quick-card.complaint > strong {
+  color: #09090B !important;
+  text-shadow: 3px 3px 0 rgba(210, 232, 35, 0.72) !important;
+}
+
+.officer-dashboard .officer-quick-card strong .animated-number {
+  background: transparent !important;
+  color: inherit !important;
+  display: inline !important;
+  font: inherit !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.officer-dashboard .officer-quick-card p {
+  color: #d8d3c4 !important;
+  font-size: clamp(0.98rem, 1.15vw, 1.12rem);
+  line-height: 1.35;
+}
+
+.officer-dashboard .officer-quick-card.alert p,
+.officer-dashboard .officer-quick-card.complaint p,
+.officer-dashboard .officer-quick-card.alert .officer-quick-meta,
+.officer-dashboard .officer-quick-card.complaint .officer-quick-meta {
+  color: #333 !important;
+}
+
+.officer-dashboard .tabs-navigation {
+  border: 3px solid #09090B !important;
+  border-radius: 8px !important;
+  box-shadow: 7px 7px 0 #09090B !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+  padding: 12px !important;
+}
+
+.officer-dashboard .tab-button {
+  background: #fffdf4 !important;
+  border: 2px solid #09090B !important;
+  border-radius: 8px !important;
+  box-shadow: 4px 4px 0 #09090B !important;
+  color: #09090B !important;
+  min-height: 52px;
+}
+
+.officer-dashboard .tab-button:hover {
+  background: #D2E823 !important;
+  box-shadow: 6px 6px 0 #09090B !important;
+}
+
+.officer-dashboard .tab-button.active {
+  background: #09090B !important;
+  border-color: #D2E823 !important;
+  box-shadow: 4px 4px 0 #D2E823 !important;
+  color: #D2E823 !important;
 }

@@ -17,6 +17,9 @@ import {
 } from 'recharts';
 import api from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
+import SlideDownText from '../../components/common/SlideDownText';
+import AnimatedNumber from '../../components/common/AnimatedNumber';
+import ChallanQrCode from '../../components/common/ChallanQrCode';
 import './PublicAccount.css';
 
 const LEVEL_COLORS = {
@@ -107,7 +110,7 @@ const CityPulseCommand = ({ situations, dashboard, selectedLocation, onSelectAle
         <div className="radar-orbit orbit-two" />
         <div className="radar-sweep" />
         <div className="radar-core">
-          <span>{riskScore}</span>
+          <span><AnimatedNumber value={riskScore} /></span>
           <small>{pulseLabel}</small>
         </div>
       </div>
@@ -128,7 +131,7 @@ const CityPulseCommand = ({ situations, dashboard, selectedLocation, onSelectAle
           {['Critical', 'High', 'Medium', 'Low'].map((level) => (
             <div key={level}>
               <span style={{ backgroundColor: LEVEL_COLORS[level] }} />
-              <strong>{counts[level] || 0}</strong>
+              <strong><AnimatedNumber value={counts[level] || 0} /></strong>
               <small>{level}</small>
             </div>
           ))}
@@ -311,12 +314,26 @@ export default function PublicAccount() {
   const [appeals, setAppeals] = useState([]);
   const [appealForm, setAppealForm] = useState({ challanNumber: '', challanId: '', reason: '', evidenceFileName: '', evidenceDataUrl: '' });
   const [appealLoading, setAppealLoading] = useState(false);
+  const [complaints, setComplaints] = useState([]);
+  const [complaintForm, setComplaintForm] = useState({
+    category: 'Traffic Jam',
+    priority: 'Medium',
+    locationName: '',
+    description: '',
+    evidenceFileName: '',
+    evidenceDataUrl: '',
+  });
+  const [complaintLoading, setComplaintLoading] = useState(false);
   const [featureMessage, setFeatureMessage] = useState('');
+  const [notifications, setNotifications] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [subscriptionArea, setSubscriptionArea] = useState('');
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', email: '', phoneNumber: '', password: '' });
   const [profileLoading, setProfileLoading] = useState(false);
+  const [demeritRequestForm, setDemeritRequestForm] = useState({ requestedPoints: 5, reason: '' });
+  const [safetyCourseForm, setSafetyCourseForm] = useState({ courseName: 'Defensive Driving Course', score: 85 });
+  const [demeritActionLoading, setDemeritActionLoading] = useState('');
 
   const isPublicUser = isAuthenticated && user?.role === 'Public';
 
@@ -324,14 +341,26 @@ export default function PublicAccount() {
     setLoading(true);
     setPageError('');
     try {
-      const [profileResponse, trafficResponse, appealsResponse, subscriptionsResponse] = await Promise.all([
+      const [profileResult, trafficResult, appealsResult, subscriptionsResult, complaintsResult, notificationsResult] = await Promise.allSettled([
         api.get('/public/me'),
         api.get('/traffic/situations'),
         api.get('/public/appeals'),
         api.get('/public/subscriptions'),
+        api.get('/public/complaints'),
+        api.get('/notifications'),
       ]);
+      const profileResponse = profileResult.status === 'fulfilled' ? profileResult.value : null;
+      const trafficResponse = trafficResult.status === 'fulfilled' ? trafficResult.value : null;
+      const appealsResponse = appealsResult.status === 'fulfilled' ? appealsResult.value : null;
+      const subscriptionsResponse = subscriptionsResult.status === 'fulfilled' ? subscriptionsResult.value : null;
+      const complaintsResponse = complaintsResult.status === 'fulfilled' ? complaintsResult.value : null;
+      const notificationsResponse = notificationsResult.status === 'fulfilled' ? notificationsResult.value : null;
 
-      if (profileResponse.data.success) {
+      if (!profileResponse?.data?.success) {
+        throw profileResult.reason || new Error('Could not load your public dashboard.');
+      }
+
+      if (profileResponse?.data?.success) {
         const data = profileResponse.data.data;
         setDashboard(data);
         setProfileForm((current) => ({
@@ -343,11 +372,13 @@ export default function PublicAccount() {
           password: '',
         }));
       }
-      if (trafficResponse.data.success) {
+      if (trafficResponse?.data?.success) {
         setSituations((trafficResponse.data.data || []).map(normalizeSituation));
       }
-      if (appealsResponse.data.success) setAppeals(appealsResponse.data.data || []);
-      if (subscriptionsResponse.data.success) setSubscriptions(subscriptionsResponse.data.data || []);
+      if (appealsResponse?.data?.success) setAppeals(appealsResponse.data.data || []);
+      if (subscriptionsResponse?.data?.success) setSubscriptions(subscriptionsResponse.data.data || []);
+      if (complaintsResponse?.data?.success) setComplaints(complaintsResponse.data.data || []);
+      if (notificationsResponse?.data?.success) setNotifications(notificationsResponse.data.data || []);
     } catch (error) {
       setPageError(error.response?.data?.message || 'Could not load your public dashboard.');
     } finally {
@@ -379,6 +410,15 @@ export default function PublicAccount() {
     .sort((a, b) => getLevelRank(b.trafficLevel) - getLevelRank(a.trafficLevel))
     .slice(0, 6);
   const vehicleLabel = dashboard?.vehicle?.registrationNumber || user?.vehicleNumber || '-';
+  const demeritProfile = dashboard?.demeritProfile || {
+    totalPoints: 0,
+    remainingUntilCancellation: 100,
+    status: 'Clear',
+    licenseCancelled: false,
+    limit: 100,
+    ledger: [],
+  };
+  const demeritPercent = Math.min(100, Math.max(0, (Number(demeritProfile.totalPoints || 0) / Number(demeritProfile.limit || 100)) * 100));
   const citizenName = [dashboard?.user?.firstName || user?.firstName, dashboard?.user?.lastName || user?.lastName]
     .filter(Boolean)
     .join(' ') || user?.username || 'Citizen';
@@ -410,6 +450,23 @@ export default function PublicAccount() {
     const values = Object.entries(grouped).map(([name, value]) => ({ name, value }));
     return values.length ? values : [{ name: 'No appeals', value: 0 }];
   }, [appeals]);
+  const complianceScore = useMemo(() => {
+    const totals = dashboard?.totals || {};
+    const total = Number(totals.totalChallans || 0);
+    const paid = Number(totals.paidCount || 0);
+    const pending = Number(totals.unpaidCount || 0) + Number(totals.partialCount || 0);
+    if (!total) return 100;
+    return Math.max(0, Math.min(100, Math.round((paid / total) * 100) - (pending * 5)));
+  }, [dashboard]);
+  const citizenServiceCards = [
+    { label: 'Compliance Score', value: `${complianceScore}%`, detail: complianceScore >= 80 ? 'healthy account standing' : 'action recommended' },
+    { label: 'Demerit Points', value: `${demeritProfile.totalPoints || 0}/${demeritProfile.limit || 100}`, detail: demeritProfile.status || 'Clear' },
+    { label: 'Watchlist Areas', value: subscriptions.length, detail: 'saved traffic alert zones' },
+    { label: 'Appeals', value: appeals.length, detail: 'submitted review cases' },
+    { label: 'Complaints', value: complaints.length, detail: 'public support tickets' },
+    { label: 'Alerts', value: notifications.filter((item) => !item.isRead).length, detail: 'unread citizen updates' },
+    { label: 'Road Alerts', value: situations.length, detail: 'active city updates' },
+  ];
 
   const updateRegister = (field, value) => {
     setRegisterForm((current) => ({ ...current, [field]: value }));
@@ -532,6 +589,49 @@ export default function PublicAccount() {
     reader.readAsDataURL(file);
   };
 
+  const handleComplaintEvidence = (file) => {
+    if (!file) {
+      setComplaintForm((current) => ({ ...current, evidenceFileName: '', evidenceDataUrl: '' }));
+      return;
+    }
+    if (file.size > 300000) {
+      setFeatureMessage('Complaint evidence should be under 300KB for fast upload.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setComplaintForm((current) => ({
+        ...current,
+        evidenceFileName: file.name,
+        evidenceDataUrl: String(reader.result || ''),
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const submitComplaint = async (event) => {
+    event.preventDefault();
+    setComplaintLoading(true);
+    setFeatureMessage('');
+    try {
+      const response = await api.post('/public/complaints', {
+        ...complaintForm,
+        contactName: citizenName,
+        contactPhone: dashboard?.user?.phoneNumber || user?.phoneNumber || '',
+        contactEmail: dashboard?.user?.email || user?.email || '',
+        vehicleRegistrationNumber: dashboard?.vehicle?.registrationNumber || user?.vehicleNumber || '',
+      });
+      setFeatureMessage(`Complaint submitted. Tracking ID ${response.data?.data?.trackingCode || 'created'}.`);
+      setComplaintForm({ category: 'Traffic Jam', priority: 'Medium', locationName: '', description: '', evidenceFileName: '', evidenceDataUrl: '' });
+      const complaintsResponse = await api.get('/public/complaints');
+      setComplaints(complaintsResponse.data?.data || []);
+    } catch (error) {
+      setFeatureMessage(error.response?.data?.message || 'Complaint could not be submitted.');
+    } finally {
+      setComplaintLoading(false);
+    }
+  };
+
   const saveSubscription = async (areaName = subscriptionArea) => {
     const cleanArea = String(areaName || '').trim();
     if (!cleanArea) return;
@@ -579,13 +679,54 @@ export default function PublicAccount() {
     }
   };
 
+  const submitDemeritReduction = async (event) => {
+    event.preventDefault();
+    if (!dashboard?.vehicle?.registrationNumber) return;
+    setDemeritActionLoading('request');
+    setFeatureMessage('');
+    try {
+      await api.post('/smart/demerit-reductions', {
+        registrationNumber: dashboard.vehicle.registrationNumber,
+        requestedPoints: Number(demeritRequestForm.requestedPoints),
+        reason: demeritRequestForm.reason,
+      });
+      setDemeritRequestForm({ requestedPoints: 5, reason: '' });
+      setFeatureMessage('Demerit reduction request submitted for officer review.');
+      await fetchDashboard();
+    } catch (error) {
+      setFeatureMessage(error.response?.data?.message || 'Demerit reduction request could not be submitted.');
+    } finally {
+      setDemeritActionLoading('');
+    }
+  };
+
+  const completeCitizenSafetyCourse = async (event) => {
+    event.preventDefault();
+    if (!dashboard?.vehicle?.registrationNumber) return;
+    setDemeritActionLoading('course');
+    setFeatureMessage('');
+    try {
+      const response = await api.post('/smart/safety-courses', {
+        registrationNumber: dashboard.vehicle.registrationNumber,
+        courseName: safetyCourseForm.courseName,
+        score: Number(safetyCourseForm.score),
+      });
+      setFeatureMessage(response.data?.message || 'Safety course recorded.');
+      await fetchDashboard();
+    } catch (error) {
+      setFeatureMessage(error.response?.data?.message || 'Safety course could not be recorded.');
+    } finally {
+      setDemeritActionLoading('');
+    }
+  };
+
   if (isPublicUser) {
     return (
       <div className="citizen-page">
         <section className="citizen-topbar">
           <div>
             <span className="citizen-kicker">Registered Citizen Portal</span>
-            <h1>{citizenName}</h1>
+            <h1><SlideDownText text={citizenName} /></h1>
             <p>NIC {dashboard?.user?.nicNumber || user?.nicNumber || '-'} · Vehicle {vehicleLabel}</p>
           </div>
           <div className="citizen-actions">
@@ -607,9 +748,103 @@ export default function PublicAccount() {
               {stats.map((stat) => (
                 <article key={stat.label} className={`citizen-stat-card ${stat.tone}`}>
                   <span>{stat.label}</span>
-                  <strong>{stat.value}</strong>
+                  <strong><AnimatedNumber value={stat.value} /></strong>
                 </article>
               ))}
+            </section>
+
+            <section className="citizen-service-strip">
+              <div className="citizen-service-score">
+                <span>Account Standing</span>
+                <strong><AnimatedNumber value={complianceScore} /></strong>
+                <div className="citizen-score-bar"><i style={{ width: `${complianceScore}%` }} /></div>
+              </div>
+              <div className={`citizen-demerit-card ${demeritProfile.licenseCancelled ? 'cancelled' : ''}`}>
+                <span>Demerit Points</span>
+                <strong><AnimatedNumber value={demeritProfile.totalPoints || 0} />/{demeritProfile.limit || 100}</strong>
+                <div className="citizen-demerit-bar"><i style={{ width: `${demeritPercent}%` }} /></div>
+                <small>
+                  {demeritProfile.licenseCancelled
+                    ? 'License cancelled'
+                    : `${demeritProfile.remainingUntilCancellation ?? 100} points before cancellation`}
+                </small>
+              </div>
+              <div className="citizen-service-grid">
+                {citizenServiceCards.map((item) => (
+                  <article key={item.label}>
+                    <span>{item.label}</span>
+                    <strong><AnimatedNumber value={item.value} /></strong>
+                    <small>{item.detail}</small>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="citizen-panel citizen-demerit-actions">
+              <div className="citizen-panel-heading">
+                <div>
+                  <h2>Demerit Control</h2>
+                  <p>Request an officer review or complete a safety course for eligible point reduction.</p>
+                </div>
+                <strong>{demeritProfile.status || 'Clear'}</strong>
+              </div>
+              <div className="citizen-demerit-action-grid">
+                <form onSubmit={submitDemeritReduction}>
+                  <h3>Request Reduction</h3>
+                  <label>
+                    Points
+                    <input
+                      type="number"
+                      min="1"
+                      max="25"
+                      value={demeritRequestForm.requestedPoints}
+                      onChange={(event) => setDemeritRequestForm((current) => ({ ...current, requestedPoints: event.target.value }))}
+                    />
+                  </label>
+                  <label>
+                    Reason
+                    <textarea
+                      required
+                      minLength="8"
+                      value={demeritRequestForm.reason}
+                      onChange={(event) => setDemeritRequestForm((current) => ({ ...current, reason: event.target.value }))}
+                      placeholder="Explain why the points should be reviewed."
+                    />
+                  </label>
+                  <button type="submit" disabled={demeritActionLoading === 'request'}>
+                    {demeritActionLoading === 'request' ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </form>
+                <form onSubmit={completeCitizenSafetyCourse}>
+                  <h3>Safety Course</h3>
+                  <label>
+                    Course
+                    <input
+                      value={safetyCourseForm.courseName}
+                      onChange={(event) => setSafetyCourseForm((current) => ({ ...current, courseName: event.target.value }))}
+                    />
+                  </label>
+                  <label>
+                    Score
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={safetyCourseForm.score}
+                      onChange={(event) => setSafetyCourseForm((current) => ({ ...current, score: event.target.value }))}
+                    />
+                  </label>
+                  <button type="submit" disabled={demeritActionLoading === 'course'}>
+                    {demeritActionLoading === 'course' ? 'Recording...' : 'Complete Course'}
+                  </button>
+                  <small>Score 70+ reduces up to 10 existing points.</small>
+                </form>
+                <div className="citizen-license-status">
+                  <span>License Action</span>
+                  <strong>{demeritProfile.licenseAction?.label || demeritProfile.status || 'Clear'}</strong>
+                  <p>{demeritProfile.licenseAction?.requiredAction || 'No enforcement action required.'}</p>
+                </div>
+              </div>
             </section>
 
             <section className="citizen-command-deck">
@@ -619,19 +854,40 @@ export default function PublicAccount() {
               </div>
               <article>
                 <span>Appeals</span>
-                <strong>{appeals.filter((appeal) => appeal.status === 'Pending Review').length}</strong>
+                <strong><AnimatedNumber value={appeals.filter((appeal) => appeal.status === 'Pending Review').length} /></strong>
                 <small>pending review</small>
               </article>
               <article>
                 <span>Watchlist</span>
-                <strong>{subscriptions.length}</strong>
+                <strong><AnimatedNumber value={subscriptions.length} /></strong>
                 <small>saved areas</small>
               </article>
               <article>
                 <span>Road Match</span>
-                <strong>{subscribedAlerts.length}</strong>
+                <strong><AnimatedNumber value={subscribedAlerts.length} /></strong>
                 <small>live alerts</small>
               </article>
+            </section>
+
+            <section className="citizen-panel citizen-notification-center">
+              <div className="citizen-panel-heading">
+                <div>
+                  <h2>Citizen Notification Center</h2>
+                  <p>Complaint, appeal, payment, and traffic updates for your account.</p>
+                </div>
+                <strong><AnimatedNumber value={notifications.filter((item) => !item.isRead).length} /> unread</strong>
+              </div>
+              <div className="citizen-notification-grid">
+                {notifications.length === 0 ? (
+                  <p className="citizen-muted">No account notifications yet.</p>
+                ) : notifications.slice(0, 4).map((item) => (
+                  <article key={item.notificationId || `${item.title}-${item.createdAt}`} className={`citizen-notice ${item.type || 'info'} ${item.isRead ? '' : 'unread'}`}>
+                    <span>{item.title}</span>
+                    <p>{item.body}</p>
+                    <small>{new Date(item.createdAt || Date.now()).toLocaleString()}</small>
+                  </article>
+                ))}
+              </div>
             </section>
 
             <CityPulseCommand
@@ -796,14 +1052,16 @@ export default function PublicAccount() {
                       <th>Violation</th>
                       <th>Location</th>
                       <th>Amount</th>
+                  <th>Demerits</th>
                   <th>Status</th>
                   <th>AI</th>
                   <th>Appeal</th>
+                  <th>QR</th>
                 </tr>
               </thead>
               <tbody>
                 {(dashboard?.challans || []).length === 0 ? (
-                      <tr><td colSpan="8" className="citizen-empty-cell">No challans found for your vehicle.</td></tr>
+                      <tr><td colSpan="10" className="citizen-empty-cell">No challans found for your vehicle.</td></tr>
                     ) : (
                       dashboard.challans.map((challan) => (
                         <tr key={challan.challanId}>
@@ -812,6 +1070,7 @@ export default function PublicAccount() {
                           <td>{challan.violation?.violationType || '-'}</td>
                           <td>{challan.location?.locationName || '-'}</td>
                           <td>{formatCurrency(challan.fineAmount)}</td>
+                          <td><span className="citizen-demerit-pill">{Number(challan.demeritPoints || 0)}</span></td>
                           <td>
                             <span className={`citizen-status ${isSettledPayment(challan.paymentStatus) ? 'paid' : 'due'}`}>
                               {challan.paymentStatus || 'Unpaid'}
@@ -835,6 +1094,9 @@ export default function PublicAccount() {
                             >
                               Appeal
                             </button>
+                          </td>
+                          <td className="citizen-qr-cell">
+                            <ChallanQrCode challan={challan} vehicleNumber={vehicleLabel} size={68} />
                           </td>
                         </tr>
                       ))
@@ -941,7 +1203,9 @@ export default function PublicAccount() {
                     appeals.slice(0, 5).map((appeal) => (
                       <div key={appeal.appealId} className="citizen-appeal-item">
                         <strong>{appeal.challanNumber || 'General appeal'}</strong>
-                        <span>{appeal.status}</span>
+                        <span className={`appeal-status ${String(appeal.status || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                          {appeal.status}
+                        </span>
                         <small>{new Date(appeal.createdAt || Date.now()).toLocaleString()}</small>
                         <p>{appeal.reason}</p>
                         {appeal.evidenceFileName && (
@@ -950,6 +1214,83 @@ export default function PublicAccount() {
                       </div>
                     ))
                   )}
+                </div>
+              </article>
+
+              <article className="citizen-panel citizen-complaint-panel">
+                <div className="citizen-panel-heading">
+                  <div>
+                    <h2>Complaint Desk</h2>
+                    <p>Report traffic service issues and track staff response.</p>
+                  </div>
+                </div>
+                <form onSubmit={submitComplaint} className="citizen-complaint-form">
+                  <div className="citizen-complaint-fields">
+                    <label>
+                      Category
+                      <select value={complaintForm.category} onChange={(event) => setComplaintForm((current) => ({ ...current, category: event.target.value }))}>
+                        {['Traffic Jam', 'Signal Issue', 'Road Condition', 'Wrong Challan', 'Officer Conduct', 'Other'].map((item) => (
+                          <option key={item} value={item}>{item}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Priority
+                      <select value={complaintForm.priority} onChange={(event) => setComplaintForm((current) => ({ ...current, priority: event.target.value }))}>
+                        {['Low', 'Medium', 'High', 'Critical'].map((item) => (
+                          <option key={item} value={item}>{item}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <label>
+                    Location
+                    <input
+                      value={complaintForm.locationName}
+                      onChange={(event) => setComplaintForm((current) => ({ ...current, locationName: event.target.value }))}
+                      placeholder="Road, signal, or area"
+                    />
+                  </label>
+                  <label>
+                    Evidence <span className="citizen-optional-label">Optional</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => handleComplaintEvidence(event.target.files?.[0])}
+                    />
+                  </label>
+                  {complaintForm.evidenceFileName && <small className="citizen-evidence-name">{complaintForm.evidenceFileName}</small>}
+                  <label>
+                    Details
+                    <textarea
+                      value={complaintForm.description}
+                      onChange={(event) => setComplaintForm((current) => ({ ...current, description: event.target.value }))}
+                      placeholder="Describe the issue..."
+                      rows="4"
+                    />
+                  </label>
+                  <button type="submit" disabled={complaintLoading || !complaintForm.description.trim()}>
+                    {complaintLoading ? 'Submitting...' : 'Submit Complaint'}
+                  </button>
+                </form>
+                <div className="citizen-complaint-list">
+                  {complaints.length === 0 ? (
+                    <p className="citizen-muted">No complaints submitted yet.</p>
+                  ) : complaints.slice(0, 4).map((complaint) => (
+                    <div key={complaint.complaintId} className="citizen-complaint-item">
+                      <strong>{complaint.trackingCode || complaint.category}</strong>
+                      <span className={`complaint-status ${String(complaint.status || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                        {complaint.status}
+                      </span>
+                      <small>{complaint.priority} - {new Date(complaint.createdAt || Date.now()).toLocaleString()}</small>
+                      <small>{complaint.category} {complaint.locationName ? `- ${complaint.locationName}` : ''}</small>
+                      <p>{complaint.description}</p>
+                      {complaint.evidenceFileName && (
+                        <a href={complaint.evidenceDataUrl} target="_blank" rel="noreferrer">Evidence: {complaint.evidenceFileName}</a>
+                      )}
+                      {complaint.officerNote && <em>{complaint.officerNote}</em>}
+                    </div>
+                  ))}
                 </div>
               </article>
             </section>
@@ -996,7 +1337,7 @@ export default function PublicAccount() {
       <section className="citizen-auth-hero">
         <div>
           <span className="citizen-kicker">Citizen Access</span>
-          <h1>Login or register your vehicle</h1>
+          <h1><SlideDownText text="Login or register your vehicle" /></h1>
           <p>
             Create a public account with your NIC and vehicle number for a private challan summary.
             Traffic updates and challan lookup still work without an account.

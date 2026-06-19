@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const publicController = require('../controllers/publicController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate, authorize } = require('../middleware/auth');
 
 /**
  * Public portal endpoints (NO AUTH)
@@ -16,6 +16,7 @@ const { authenticate, authorize } = require('../middleware/auth');
  * - registrationNumber (required)
  */
 router.get('/challan/:challanNumber', publicController.getPublicChallanByNumber);
+router.get('/verify-challan/:token', publicController.verifyPublicChallanToken);
 
 /**
  * GET /api/public/vehicle/:registrationNumber
@@ -49,6 +50,13 @@ router.post('/appeals', authenticate, publicController.createPublicChallanAppeal
 router.get('/officer/appeals', authenticate, authorize('Officer', 'Admin'), publicController.getOfficerPublicAppeals);
 router.put('/officer/appeals/:appealId', authenticate, authorize('Officer', 'Admin'), publicController.updateOfficerPublicAppeal);
 
+router.post('/complaints', optionalAuthenticate, publicController.createPublicComplaint);
+router.get('/complaints/map', publicController.getPublicComplaintMap);
+router.get('/complaints/track/:trackingCode', publicController.trackPublicComplaint);
+router.get('/complaints', authenticate, publicController.getPublicComplaints);
+router.get('/officer/complaints', authenticate, authorize('Officer', 'Admin'), publicController.getOfficerPublicComplaints);
+router.put('/officer/complaints/:complaintId', authenticate, authorize('Officer', 'Admin'), publicController.updateOfficerPublicComplaint);
+
 router.get('/subscriptions', authenticate, publicController.getPublicAlertSubscriptions);
 router.post('/subscriptions', authenticate, publicController.createPublicAlertSubscription);
 router.delete('/subscriptions/:subscriptionId', authenticate, publicController.deletePublicAlertSubscription);
@@ -56,7 +64,7 @@ router.delete('/subscriptions/:subscriptionId', authenticate, publicController.d
 /**
  * POST /api/public/vehicle/:registrationNumber/payment
  *
- * Demo-only public payment endpoint. Marks unpaid/partial challans for the
+ * Public payment endpoint. Marks unpaid/partial challans for the
  * vehicle as paid so the public tracker keeps showing Paid on future searches.
  */
 router.post('/vehicle/:registrationNumber/payment', publicController.payPublicVehicleChallans);

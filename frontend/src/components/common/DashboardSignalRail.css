@@ -1,0 +1,171 @@
+.dashboard-signal-rail {
+  align-items: center;
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.2), transparent 30%, rgba(210, 232, 35, 0.14)),
+    #fffdf4;
+  background-size: 22px 22px, 22px 22px, auto, auto;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #09090B;
+  color: #09090B;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(180px, auto) minmax(180px, 1fr) minmax(130px, auto);
+  margin: 22px auto 0;
+  max-width: 1200px;
+  overflow: hidden;
+  padding: 12px 16px;
+  position: relative;
+  width: calc(100% - 40px);
+  z-index: 8;
+}
+
+.dashboard-signal-rail::before {
+  animation: signalRailSweep 3.4s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(210, 232, 35, 0.68), transparent);
+  content: "";
+  height: 100%;
+  left: -30%;
+  opacity: 0.26;
+  position: absolute;
+  top: 0;
+  transform: skewX(-18deg);
+  width: 26%;
+}
+
+.dashboard-signal-rail::after {
+  background: #D2E823;
+  border-left: 3px solid #09090B;
+  content: "";
+  height: 84px;
+  position: absolute;
+  right: -30px;
+  top: -22px;
+  transform: rotate(11deg);
+  width: 112px;
+}
+
+.dashboard-signal-rail > * {
+  position: relative;
+  z-index: 1;
+}
+
+.signal-rail-heading,
+.signal-rail-status {
+  display: grid;
+  gap: 2px;
+}
+
+.signal-rail-heading span,
+.signal-rail-status span {
+  color: #4d5f00;
+  font-size: 0.72rem;
+  font-weight: 1000;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.signal-rail-heading strong,
+.signal-rail-status strong {
+  font-family: var(--font-display);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.signal-rail-heading strong {
+  font-size: clamp(1.25rem, 2.4vw, 1.8rem);
+}
+
+.signal-rail-status {
+  justify-items: end;
+  text-align: right;
+}
+
+.signal-rail-status strong {
+  background: #09090B;
+  border-radius: 8px;
+  color: #D2E823;
+  font-size: clamp(1rem, 2vw, 1.45rem);
+  padding: 7px 10px;
+}
+
+.signal-rail-stream {
+  align-items: center;
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.12) 1px, transparent 1px),
+    rgba(248, 244, 232, 0.05);
+  background-size: 18px 18px;
+  border: 2px solid #09090B;
+  border-radius: 999px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, minmax(12px, 1fr));
+  min-height: 24px;
+  overflow: hidden;
+  padding: 5px 10px;
+}
+
+.signal-rail-stream i {
+  animation: signalRailTick 1.8s ease-in-out infinite;
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 999px;
+  box-shadow: 0 0 16px rgba(210, 232, 35, 0.48);
+  height: 12px;
+  opacity: 0.45;
+}
+
+.signal-rail-stream i:nth-child(2) { animation-delay: 0.15s; }
+.signal-rail-stream i:nth-child(3) { animation-delay: 0.3s; }
+.signal-rail-stream i:nth-child(4) { animation-delay: 0.45s; }
+.signal-rail-stream i:nth-child(5) { animation-delay: 0.6s; }
+.signal-rail-stream i:nth-child(6) { animation-delay: 0.75s; }
+
+.dashboard-signal-rail.rail-white .signal-rail-status strong,
+.dashboard-signal-rail.rail-white .signal-rail-stream i {
+  background: #09090B;
+  color: #F8F4E8;
+}
+
+.dashboard-signal-rail.rail-white::after {
+  background: #F8F4E8;
+}
+
+@keyframes signalRailSweep {
+  to { left: 130%; }
+}
+
+@keyframes signalRailTick {
+  0%, 100% {
+    opacity: 0.28;
+    transform: scaleX(0.55);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-signal-rail {
+    grid-template-columns: 1fr;
+    margin-top: 12px;
+    padding: 12px;
+    width: calc(100% - 28px);
+  }
+
+  .signal-rail-status {
+    justify-items: start;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-signal-rail::before,
+  .signal-rail-stream i {
+    animation: none;
+  }
+}

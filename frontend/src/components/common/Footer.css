@@ -1,0 +1,39 @@
+.site-footer {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    #F8F4E8;
+  background-size: 28px 28px;
+  border-top: 3px solid #09090B;
+  color: #09090B;
+  font-weight: 900;
+  margin-top: 0;
+  padding: 22px max(20px, env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer small {
+  color: #4d4d48;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 900;
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .site-footer {
+    border-top-width: 2px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    padding-top: 16px;
+  }
+
+  .site-footer small {
+    font-size: 0.68rem;
+  }
+}

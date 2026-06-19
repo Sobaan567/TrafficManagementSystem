@@ -1,5 +1,9 @@
 .citizen-page {
-  background: #F8F4E8;
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    #F8F4E8;
+  background-size: 34px 34px;
   color: #09090B;
   min-height: 100%;
   padding: 34px 20px 80px;
@@ -27,11 +31,37 @@
   border: 3px solid #09090B;
   border-radius: 8px;
   box-shadow: 7px 7px 0 #09090B;
-  display: flex;
+  display: grid;
   gap: 18px;
-  justify-content: space-between;
+  grid-template-columns: minmax(0, 1fr) auto;
   margin-bottom: 24px;
   padding: clamp(22px, 4vw, 38px);
+  position: relative;
+  overflow: hidden;
+}
+
+.citizen-topbar::after {
+  display: none;
+}
+
+.citizen-topbar::after,
+.citizen-auth-hero::after {
+  background: rgba(255, 255, 255, 0.45);
+  border: 3px solid #09090B;
+  content: '';
+  height: 92px;
+  position: absolute;
+  right: -42px;
+  top: 10px;
+  transform: rotate(12deg);
+  width: 250px;
+  z-index: 0;
+}
+
+.citizen-topbar > *,
+.citizen-auth-hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 .citizen-auth-hero {
@@ -50,9 +80,11 @@
 
 .citizen-topbar h1,
 .citizen-auth-hero h1 {
-  font-size: clamp(2rem, 5vw, 4rem);
-  line-height: 1;
+  font-size: clamp(2.8rem, 6vw, 4.8rem);
+  line-height: 0.92;
   margin: 0 0 10px;
+  max-width: 820px;
+  overflow-wrap: anywhere;
 }
 
 .citizen-topbar p,
@@ -69,6 +101,7 @@
   flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
+  max-width: 300px;
 }
 
 .citizen-btn,
@@ -148,9 +181,224 @@
 
 .citizen-stat-grid {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 24px;
+}
+
+.citizen-service-strip {
+  align-items: stretch;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 240px 270px minmax(0, 1fr);
+  margin: 0 auto 24px;
+  max-width: 1200px;
+}
+
+.citizen-service-score,
+.citizen-demerit-card,
+.citizen-service-grid article {
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    #09090B;
+  background-size: 24px 24px;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #09090B;
+  padding: 18px;
+}
+
+.citizen-service-score {
+  color: #F8F4E8;
+}
+
+.citizen-service-score span,
+.citizen-demerit-card span,
+.citizen-demerit-card small,
+.citizen-service-grid span,
+.citizen-service-grid small {
+  display: block;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.citizen-service-score span,
+.citizen-demerit-card span,
+.citizen-service-grid span {
+  color: #D2E823;
+}
+
+.citizen-service-score strong,
+.citizen-demerit-card strong {
+  color: #D2E823;
+  display: block;
+  font-family: var(--font-display);
+  font-size: 4rem;
+  line-height: 1;
+  margin: 10px 0;
+}
+
+.citizen-demerit-card {
+  color: #F8F4E8;
+}
+
+.citizen-demerit-card.cancelled {
+  background:
+    linear-gradient(rgba(255, 59, 59, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 59, 59, 0.14) 1px, transparent 1px),
+    #300c0c;
+}
+
+.citizen-demerit-card small {
+  color: #F8F4E8;
+  font-size: 0.72rem;
+  opacity: 0.86;
+}
+
+.citizen-demerit-actions {
+  margin-bottom: 24px;
+}
+
+.citizen-demerit-actions .citizen-panel-heading > strong {
+  background: #09090B;
+  border: 2px solid #D2E823;
+  border-radius: 999px;
+  color: #D2E823;
+  flex: 0 0 auto;
+  font-weight: 1000;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.citizen-demerit-action-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.citizen-demerit-action-grid form,
+.citizen-license-status {
+  background: #F8F4E8;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.citizen-demerit-action-grid h3,
+.citizen-license-status span {
+  font-size: 1rem;
+  font-weight: 1000;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.citizen-demerit-action-grid label {
+  display: grid;
+  font-weight: 900;
+  gap: 6px;
+}
+
+.citizen-demerit-action-grid input,
+.citizen-demerit-action-grid textarea {
+  background: #fff;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  color: #09090B;
+  font: inherit;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 10px;
+  width: 100%;
+}
+
+.citizen-demerit-action-grid textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.citizen-demerit-action-grid button {
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 8px;
+  color: #09090B;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 1000;
+  padding: 11px 14px;
+  text-transform: uppercase;
+}
+
+.citizen-demerit-action-grid button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.citizen-license-status {
+  background: #09090B;
+  border-color: #D2E823;
+  color: #F8F4E8;
+}
+
+.citizen-license-status strong {
+  color: #D2E823;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.citizen-license-status p,
+.citizen-demerit-action-grid small {
+  font-weight: 850;
+  margin: 0;
+}
+
+.citizen-score-bar,
+.citizen-demerit-bar {
+  background: #F8F4E8;
+  border: 2px solid #D2E823;
+  border-radius: 999px;
+  height: 18px;
+  overflow: hidden;
+}
+
+.citizen-score-bar i,
+.citizen-demerit-bar i {
+  background: linear-gradient(90deg, #FF3B3B, #FF851B, #D2E823, #2ECC40);
+  display: block;
+  height: 100%;
+}
+
+.citizen-demerit-bar i {
+  background: linear-gradient(90deg, #2ECC40 0 30%, #D2E823 30% 60%, #FF851B 60% 90%, #FF3B3B 90%);
+}
+
+.citizen-service-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.citizen-service-grid article {
+  min-width: 0;
+}
+
+.citizen-service-grid strong {
+  color: #F8F4E8;
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  line-height: 1;
+  margin: 10px 0;
+  text-shadow: 3px 3px 0 rgba(210, 232, 35, 0.22);
+}
+
+.citizen-service-grid small {
+  color: #F8F4E8;
+  font-size: 0.72rem;
+  opacity: 0.82;
 }
 
 .citizen-stat-card,
@@ -162,15 +410,33 @@
   box-shadow: 5px 5px 0 #09090B;
 }
 
+.citizen-stat-card,
+.citizen-panel,
+.citizen-service-grid article,
+.citizen-service-score,
+.citizen-demerit-card,
+.citizen-command-deck article {
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.citizen-stat-card:hover,
+.citizen-panel:hover,
+.citizen-service-grid article:hover,
+.citizen-command-deck article:hover {
+  box-shadow: 9px 9px 0 #09090B;
+  transform: translate(-3px, -3px);
+}
+
 .citizen-stat-card {
-  padding: 20px;
+  min-height: 124px;
+  padding: 20px 22px;
 }
 
 .citizen-stat-card span {
   display: block;
-  font-size: 12px;
+  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
   font-weight: 900;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   text-transform: uppercase;
 }
 
@@ -178,8 +444,15 @@
   color: #09090B;
   display: block;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(3.1rem, 6vw, 4.9rem);
+  font-weight: 900;
   line-height: 1;
+  letter-spacing: 0;
+  margin-top: 6px;
+}
+
+.citizen-stat-card.payable strong {
+  font-size: clamp(2.5rem, 4.8vw, 4.4rem);
 }
 
 .citizen-stat-card.payable {
@@ -187,11 +460,19 @@
 }
 
 .citizen-stat-card.danger {
-  background: #FFE3DF;
+  background: #D2E823;
 }
 
 .citizen-stat-card.good {
-  background: #E7F8E8;
+  background: #D2E823;
+}
+
+.citizen-stat-card.neutral {
+  background: #fff;
+}
+
+.citizen-stat-card strong {
+  text-shadow: 3px 3px 0 rgba(210, 232, 35, 0.24);
 }
 
 .citizen-heat-point {
@@ -223,7 +504,8 @@
 .citizen-command-deck article {
   border: 3px solid #09090B;
   border-radius: 8px;
-  box-shadow: 5px 5px 0 #09090B;
+  box-shadow: 6px 6px 0 #09090B;
+  min-width: 0;
   padding: 18px;
 }
 
@@ -237,7 +519,11 @@
 }
 
 .citizen-command-deck article {
-  background: #fff;
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.08) 1px, transparent 1px),
+    #D2E823;
+  background-size: 22px 22px;
 }
 
 .citizen-command-core span,
@@ -252,17 +538,27 @@
   color: #D2E823;
 }
 
-.citizen-command-core strong,
+.citizen-command-core strong {
+  color: #F8F4E8;
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4vw, 3.55rem);
+  line-height: 0.95;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
 .citizen-command-deck article strong {
   display: block;
   font-family: var(--font-display);
-  font-size: clamp(1.9rem, 4vw, 3.1rem);
+  font-size: clamp(2.7rem, 5vw, 4.3rem);
   line-height: 0.95;
   margin-top: 10px;
 }
 
 .citizen-command-deck article small {
-  color: #555;
+  color: #09090B;
   font-size: 0.75rem;
 }
 
@@ -288,7 +584,7 @@
 .citizen-feature-grid {
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
   margin: 24px auto 0;
   max-width: 1200px;
 }
@@ -302,7 +598,10 @@
 
 .citizen-watch-input input,
 .citizen-appeal-form input,
-.citizen-appeal-form textarea {
+.citizen-appeal-form textarea,
+.citizen-complaint-form input,
+.citizen-complaint-form select,
+.citizen-complaint-form textarea {
   background: #fff;
   border: 2px solid #09090B;
   border-radius: 8px;
@@ -315,7 +614,8 @@
 
 .citizen-watch-input button,
 .citizen-suggested-areas button,
-.citizen-appeal-form button {
+.citizen-appeal-form button,
+.citizen-complaint-form button {
   background: #D2E823;
   border: 2px solid #09090B;
   border-radius: 8px;
@@ -380,46 +680,268 @@
   margin-top: 16px;
 }
 
-.citizen-appeal-form label {
+.citizen-appeal-form label,
+.citizen-complaint-form label {
   color: #09090B;
   display: grid;
   font-weight: 900;
   gap: 6px;
 }
 
+.citizen-complaint-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.citizen-complaint-fields {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.citizen-complaint-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .citizen-appeal-list {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   margin-top: 18px;
 }
 
-.citizen-appeal-item {
-  background: #F8F4E8;
+.citizen-complaint-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.citizen-complaint-item {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.045) 1px, transparent 1px),
+    #fffdf4;
+  background-size: 22px 22px;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #09090B;
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 14px;
+}
+
+.citizen-complaint-item strong {
+  color: #09090B;
+  font-weight: 1000;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.citizen-complaint-item span {
+  background: #D2E823;
+  border: 2px solid #09090B;
+  border-radius: 999px;
+  font-weight: 1000;
+  padding: 5px 9px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.citizen-complaint-item .complaint-status.resolved {
+  background: #2ECC40;
+}
+
+.citizen-complaint-item .complaint-status.dismissed {
+  background: #FF3B3B;
+  color: #fff;
+}
+
+.citizen-complaint-item small,
+.citizen-complaint-item p,
+.citizen-complaint-item em {
+  grid-column: 1 / -1;
+}
+
+.citizen-complaint-item small {
+  color: #5d5d58;
+  font-weight: 900;
+}
+
+.citizen-complaint-item p {
+  color: #31312d !important;
+  font-weight: 850;
+  margin: 0;
+}
+
+.citizen-complaint-item em {
+  background: #09090B;
+  border-radius: 8px;
+  color: #D2E823;
+  font-style: normal;
+  font-weight: 900;
+  padding: 8px 10px;
+}
+
+.citizen-complaint-item a {
+  color: #09090B;
+  font-weight: 1000;
+  grid-column: 1 / -1;
+  text-decoration: underline;
+  text-decoration-color: #D2E823;
+  text-decoration-thickness: 3px;
+}
+
+.citizen-notification-center {
+  margin-bottom: 24px;
+}
+
+.citizen-notification-center .citizen-panel-heading > strong {
+  background: #09090B;
+  border: 2px solid #D2E823;
+  border-radius: 999px;
+  color: #D2E823;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.citizen-notification-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.citizen-notice {
+  background: #fffdf4;
   border: 2px solid #09090B;
   border-radius: 8px;
+  box-shadow: 4px 4px 0 #09090B;
+  display: grid;
+  gap: 5px;
   padding: 12px;
+}
+
+.citizen-notice.unread {
+  box-shadow: inset 6px 0 0 #D2E823, 4px 4px 0 #09090B;
+}
+
+.citizen-notice.success {
+  background: #E7F8E8;
+}
+
+.citizen-notice.danger {
+  background: #FFE3DF;
+}
+
+.citizen-notice span {
+  color: #09090B;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.citizen-notice p,
+.citizen-notice small {
+  color: #4d4d48;
+  font-weight: 850;
+  margin: 0;
+}
+
+.citizen-qr-cell {
+  min-width: 110px;
+  vertical-align: top;
+}
+
+.citizen-qr-cell .challan-qr-card {
+  transform: scale(0.86);
+  transform-origin: top left;
+}
+
+.citizen-appeal-item {
+  align-items: start;
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.045) 1px, transparent 1px),
+    #fffdf4;
+  background-size: 22px 22px;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #09090B;
+  color: #09090B;
+  display: grid;
+  gap: 10px 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 18px 20px;
+  position: relative;
+}
+
+.citizen-appeal-item::before {
+  background: #D2E823;
+  border: 2px solid #09090B;
+  content: "";
+  height: 14px;
+  left: 18px;
+  position: absolute;
+  top: -9px;
+  width: 78px;
+}
+
+.citizen-appeal-item strong {
+  color: #09090B;
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  font-weight: 1000;
+  line-height: 0.98;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
 }
 
 .citizen-appeal-item span {
   background: #D2E823;
-  border: 1px solid #09090B;
+  border: 2px solid #09090B;
   border-radius: 999px;
   display: inline-block;
-  font-size: 12px;
+  font-size: 0.82rem;
   font-weight: 900;
-  margin-left: 8px;
-  padding: 3px 8px;
+  justify-self: end;
+  line-height: 1;
+  padding: 8px 12px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.citizen-appeal-item .appeal-status.approved {
+  background: #D2E823;
+  color: #09090B;
+}
+
+.citizen-appeal-item .appeal-status.rejected {
+  background: #ff4b4b;
+  color: #fffdf4;
+}
+
+.citizen-appeal-item .appeal-status.pending-review,
+.citizen-appeal-item .appeal-status.need-more-info {
+  background: #fffdf4;
+  color: #09090B;
 }
 
 .citizen-appeal-item small {
-  color: #666;
+  color: #5d5d58;
   display: block;
-  font-weight: 800;
-  margin-top: 6px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  grid-column: 1 / -1;
+  margin-top: 0;
 }
 
 .citizen-appeal-item p {
-  margin: 8px 0 0;
+  color: #31312d !important;
+  font-size: clamp(1rem, 1.45vw, 1.18rem);
+  font-weight: 850;
+  grid-column: 1 / -1;
+  line-height: 1.35;
+  margin: 0;
 }
 
 .citizen-appeal-item a,
@@ -427,6 +949,22 @@
   display: inline-block;
   font-weight: 900;
   margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .citizen-appeal-item {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .citizen-complaint-fields,
+  .citizen-complaint-item {
+    grid-template-columns: 1fr;
+  }
+
+  .citizen-appeal-item span {
+    justify-self: start;
+  }
 }
 
 .citizen-optional-label {
@@ -614,19 +1152,25 @@
 }
 
 .pulse-counts div {
+  align-items: center;
   background: rgba(248, 244, 232, 0.08);
   border: 1px solid rgba(248, 244, 232, 0.35);
   border-radius: 8px;
-  padding: 10px;
+  display: grid;
+  gap: 4px 10px;
+  grid-template-columns: 22px minmax(0, 1fr);
+  min-height: 78px;
+  padding: 10px 12px;
 }
 
 .pulse-counts span {
   border: 2px solid #F8F4E8;
   border-radius: 50%;
   display: block;
-  height: 16px;
-  margin-bottom: 8px;
-  width: 16px;
+  grid-row: 1 / span 2;
+  height: 20px;
+  margin: 0;
+  width: 20px;
 }
 
 .pulse-counts strong,
@@ -636,12 +1180,16 @@
 
 .pulse-counts strong {
   color: #D2E823;
-  font-size: 1.35rem;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 0.9;
 }
 
 .pulse-counts small {
   color: #d8d3c4;
+  font-size: 0.78rem;
   font-weight: 900;
+  line-height: 1;
 }
 
 .city-pulse-jumps {
@@ -951,6 +1499,18 @@
   color: #b00020;
 }
 
+.citizen-demerit-pill {
+  background: #09090B;
+  border: 2px solid #D2E823;
+  border-radius: 999px;
+  color: #D2E823;
+  display: inline-block;
+  font-weight: 900;
+  min-width: 38px;
+  padding: 5px 9px;
+  text-align: center;
+}
+
 .citizen-ai-explain {
   background: #09090B;
   border: 2px solid #D2E823;
@@ -1033,7 +1593,10 @@
 
 @media (max-width: 980px) {
   .citizen-topbar,
-  .citizen-auth-hero,
+  .citizen-auth-hero {
+    grid-template-columns: 1fr;
+  }
+
   .citizen-panel-heading {
     flex-direction: column;
   }
@@ -1042,12 +1605,25 @@
     grid-template-columns: 1fr;
   }
 
+  .citizen-demerit-action-grid {
+    grid-template-columns: 1fr;
+  }
+
   .citizen-actions,
   .citizen-auth-links {
     justify-content: flex-start;
+    max-width: none;
   }
 
   .citizen-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .citizen-service-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .citizen-service-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1087,7 +1663,8 @@
 
   .citizen-stat-grid,
   .citizen-form-grid,
-  .citizen-command-deck {
+  .citizen-command-deck,
+  .citizen-service-grid {
     grid-template-columns: 1fr;
   }
 

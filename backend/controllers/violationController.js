@@ -1,6 +1,9 @@
 const { executeQuery } = require('../config/database');
 const axios = require('axios');
 const { logActivity } = require('../utils/systemEvents');
+const { addDemeritEntry, ensureSmartFeatureTables } = require('./smartFeatureController');
+
+const normalizeDemeritPoints = (value) => Math.max(0, Math.min(Number(value) || 0, 100));
 
 const geocodeLocation = async (locationName) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
@@ -44,12 +47,13 @@ exports.officerAddViolation = async (req, res) => {
   try {
     const {
       registrationNumber, violationType, severity, speed, speedLimit,
-      locationName, description, fineAmount, ownerName, ownerPhone,
+      locationName, description, fineAmount, ownerName, ownerPhone, demeritPoints,
     } = req.body;
 
     if (!registrationNumber || !violationType || !severity || !locationName || !fineAmount || !ownerName || !ownerPhone) {
       return res.status(400).json({ success: false, message: 'All required fields must be filled.' });
     }
+    await ensureSmartFeatureTables();
 
     // Get or create vehicle
     let vehicleResult = await executeQuery(
@@ -135,8 +139,10 @@ exports.officerAddViolation = async (req, res) => {
     const challanNumber = `CH-${new Date().getFullYear()}-${Date.now()}`;
 
     // Insert challan
-    await executeQuery(
-      `INSERT INTO Challans (ChallanNumber, ViolationID, VehicleID, OwnerName, OwnerPhone, IssuedByOfficerID, ViolationType, Location, FineAmount, DueDate, ChallanStatus, PaymentStatus, CreatedAt) VALUES (@challanNumber, @violationId, @vehicleId, @ownerName, @ownerPhone, @officerId, @violationType, @locationName, @fineAmount, DATEADD(DAY, 30, GETDATE()), 'Issued', 'Unpaid', GETDATE())`,
+    const challanInsert = await executeQuery(
+      `INSERT INTO Challans (ChallanNumber, ViolationID, VehicleID, OwnerName, OwnerPhone, IssuedByOfficerID, ViolationType, Location, FineAmount, DueDate, ChallanStatus, PaymentStatus, CreatedAt)
+       VALUES (@challanNumber, @violationId, @vehicleId, @ownerName, @ownerPhone, @officerId, @violationType, @locationName, @fineAmount, DATEADD(DAY, 30, GETDATE()), 'Issued', 'Unpaid', GETDATE());
+       SELECT SCOPE_IDENTITY() as ChallanID`,
       {
         challanNumber,
         violationId,
@@ -149,6 +155,18 @@ exports.officerAddViolation = async (req, res) => {
         fineAmount: Number(fineAmount),
       }
     );
+    const challanId = challanInsert.recordset[0].ChallanID;
+    const points = normalizeDemeritPoints(demeritPoints);
+    const demerit = points > 0
+      ? await addDemeritEntry({
+        registrationNumber: registrationNumber.toUpperCase(),
+        vehicleId,
+        challanId,
+        points,
+        reason: `${violationType} challan`,
+        userId: req.user.userId,
+      })
+      : null;
 
     await logActivity({
       user: req.user,
@@ -158,7 +176,7 @@ exports.officerAddViolation = async (req, res) => {
       description: `Officer created challan ${challanNumber} for ${registrationNumber.toUpperCase()} (${violationType})`,
     });
 
-    res.json({ success: true, message: 'Violation and challan created successfully', challanNumber });
+    res.json({ success: true, message: 'Violation and challan created successfully', challanNumber, challanId, demerit });
 
   } catch (error) {
     console.error('Officer add violation error:', error);

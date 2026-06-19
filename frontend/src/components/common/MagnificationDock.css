@@ -1,0 +1,107 @@
+.magnification-dock-shell {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+.magnification-dock-panel {
+  align-items: flex-end;
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.1) 1px, transparent 1px),
+    rgba(9, 9, 11, 0.94);
+  background-size: 18px 18px;
+  border: 3px solid #D2E823;
+  border-radius: 28px;
+  box-shadow: 6px 6px 0 #09090B;
+  display: flex;
+  gap: 8px;
+  padding: 0 10px 7px;
+  width: fit-content;
+}
+
+.magnification-dock-item {
+  align-items: center;
+  background: #F8F4E8;
+  border: 3px solid #09090B;
+  border-radius: 50%;
+  box-shadow: 4px 4px 0 #D2E823;
+  color: #09090B;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  position: relative;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.magnification-dock-item:hover,
+.magnification-dock-item:focus-visible {
+  background: #D2E823;
+  color: #09090B;
+  outline: none;
+}
+
+.magnification-dock-item.is-active {
+  background: #D2E823;
+  box-shadow: 4px 4px 0 #F8F4E8;
+}
+
+.magnification-dock-icon {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.magnification-dock-icon svg {
+  stroke-width: 2.7;
+}
+
+.magnification-dock-label {
+  background: #09090B;
+  border: 2px solid #D2E823;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 rgba(9, 9, 11, 0.35);
+  color: #D2E823;
+  font-size: 0.72rem;
+  font-weight: 900;
+  left: 50%;
+  line-height: 1;
+  padding: 7px 9px;
+  position: absolute;
+  text-transform: uppercase;
+  top: -34px;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px), (pointer: coarse) {
+  .magnification-dock-shell {
+    height: auto !important;
+  }
+
+  .magnification-dock-panel {
+    border-radius: 24px;
+    gap: 8px;
+    max-width: calc(100vw - 28px);
+    overflow-x: auto;
+    padding: 7px;
+  }
+
+  .magnification-dock-item {
+    flex: 0 0 48px;
+    height: 48px !important;
+    width: 48px !important;
+  }
+
+  .magnification-dock-label {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .magnification-dock-item {
+    height: 50px !important;
+    width: 50px !important;
+  }
+}

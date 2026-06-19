@@ -17,6 +17,7 @@ const chatbotRoutes = require('./routes/chatbot');
 const notificationRoutes = require('./routes/notification');
 const activityRoutes = require('./routes/activity');
 const adminRoutes = require('./routes/admin');
+const smartRoutes = require('./routes/smart');
 
 // Middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -25,8 +26,38 @@ const { requestLogger } = require('./middleware/logging');
 const app = express();
 
 app.use(helmet());
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const isLocalNetworkOrigin = (origin) => {
+  if (!origin) return true;
+
+  try {
+    const { hostname, port, protocol } = new URL(origin);
+    const isHttp = protocol === 'http:' || protocol === 'https:';
+    const isFrontendPort = !port || port === '3000';
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isPrivateIp =
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+    return isHttp && isFrontendPort && (isLocalHost || isPrivateIp);
+  } catch {
+    return false;
+  }
+};
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin(origin, callback) {
+    if (allowedOrigins.includes(origin) || isLocalNetworkOrigin(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked origin: ${origin}`));
+  },
   credentials: true,
 }));
 
@@ -50,6 +81,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/smart', smartRoutes);
 
 // 404 Handler
 app.use((req, res) => {

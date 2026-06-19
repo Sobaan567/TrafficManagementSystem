@@ -23,6 +23,7 @@ import OfficerPanel from '../components/dashboard/OfficerPanel';
 import TrafficScene3D from '../components/3d/TrafficScene3D';
 import GlitchText from '../components/common/GlitchText';
 import HardShadowButton from '../components/common/HardShadowButton';
+import AnimatedNumber from '../components/common/AnimatedNumber';
 import api from '../services/api';
 import './OfficerDashboard.css';
 
@@ -62,10 +63,31 @@ const SEVERITY_MULTIPLIERS = {
   Critical: 2
 };
 
+const BASE_DEMERIT_POINTS = {
+  Speeding: 4,
+  'Red Light Violation': 8,
+  'Illegal Parking': 2,
+  'No Helmet': 3,
+  'No Seat Belt': 3,
+  'Wrong Side Driving': 8,
+  Overloading: 7,
+  'Mobile Phone Usage': 6,
+  'Dangerous Driving': 18,
+  'No License Plate': 4,
+  'Expired Registration': 3,
+  'Expired Insurance': 3,
+  'Expired Fitness Certificate': 3,
+  'Pollution Certificate Expired': 2,
+  Other: 3
+};
+
 const chartColors = ['#D2E823', '#09090B', '#FF851B', '#FF3B3B'];
 
 const calculateFineAmount = (violationType, severity) =>
   Math.round((BASE_FINES[violationType] || BASE_FINES.Other) * (SEVERITY_MULTIPLIERS[severity] || 1));
+
+const calculateDemeritPoints = (violationType, severity) =>
+  Math.min(100, Math.max(1, Math.round((BASE_DEMERIT_POINTS[violationType] || BASE_DEMERIT_POINTS.Other) * (SEVERITY_MULTIPLIERS[severity] || 1))));
 
 const extractJsonObject = (text) => {
   const match = String(text || '').match(/\{[\s\S]*\}/);
@@ -86,6 +108,7 @@ const initialViolationForm = {
   locationName: '',
   description: '',
   fineAmount: calculateFineAmount('Speeding', 'Minor'),
+  demeritPoints: calculateDemeritPoints('Speeding', 'Minor'),
   ownerName: '',
   ownerPhone: '',
 };
@@ -125,6 +148,12 @@ const OfficerDashboard = () => {
   const [appealNotes, setAppealNotes] = useState({});
   const [appealFilter, setAppealFilter] = useState('All');
   const [appealSearch, setAppealSearch] = useState('');
+  const [publicComplaints, setPublicComplaints] = useState([]);
+  const [complaintsLoading, setComplaintsLoading] = useState(false);
+  const [complaintMessage, setComplaintMessage] = useState('');
+  const [complaintNotes, setComplaintNotes] = useState({});
+  const [complaintFilter, setComplaintFilter] = useState('All');
+  const [complaintSearch, setComplaintSearch] = useState('');
   const [activityLogs, setActivityLogs] = useState([]);
   const [activityLoading, setActivityLoading] = useState(false);
 
@@ -138,6 +167,19 @@ const OfficerDashboard = () => {
       setAppealMessage(error.response?.data?.message || 'Could not load citizen appeals.');
     } finally {
       setAppealsLoading(false);
+    }
+  }, []);
+
+  const fetchPublicComplaints = useCallback(async () => {
+    setComplaintsLoading(true);
+    setComplaintMessage('');
+    try {
+      const response = await api.get('/public/officer/complaints');
+      setPublicComplaints(response.data?.data || []);
+    } catch (error) {
+      setComplaintMessage(error.response?.data?.message || 'Could not load public complaints.');
+    } finally {
+      setComplaintsLoading(false);
     }
   }, []);
 
@@ -185,8 +227,9 @@ const OfficerDashboard = () => {
       setViolations([]);
     }
     fetchPublicAppeals();
+    fetchPublicComplaints();
     fetchActivityLogs();
-  }, [fetchActivityLogs, fetchPublicAppeals]);
+  }, [fetchActivityLogs, fetchPublicAppeals, fetchPublicComplaints]);
 
   useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
@@ -205,6 +248,25 @@ const OfficerDashboard = () => {
       setAppealMessage(error.response?.data?.message || 'Could not update appeal.');
     } finally {
       setAppealsLoading(false);
+    }
+  };
+
+  const updateComplaintStatus = async (complaint, status) => {
+    setComplaintsLoading(true);
+    setComplaintMessage('');
+    try {
+      await api.put(`/public/officer/complaints/${complaint.complaintId}`, {
+        status,
+        priority: complaint.priority || 'Medium',
+        officerNote: complaintNotes[complaint.complaintId] || complaint.officerNote || '',
+      });
+      await fetchPublicComplaints();
+      fetchActivityLogs();
+      setComplaintMessage(`Complaint ${complaint.complaintId} marked ${status}.`);
+    } catch (error) {
+      setComplaintMessage(error.response?.data?.message || 'Could not update complaint.');
+    } finally {
+      setComplaintsLoading(false);
     }
   };
 
@@ -253,11 +315,14 @@ const OfficerDashboard = () => {
     { month: 'May', amount: 211000 },
   ];
 
+  const pendingAppeals = publicAppeals.filter((appeal) => appeal.status === 'Pending Review').length;
+  const openComplaints = publicComplaints.filter((complaint) => ['Open', 'In Review'].includes(complaint.status)).length;
+
   const commandSignals = [
     { label: 'Collection Pressure', value: `${stats.totalChallans ? Math.round((stats.pendingChallans / stats.totalChallans) * 100) : 0}%`, tone: 'warn' },
     { label: 'Active Units', value: officerLocations.length, tone: 'live' },
     { label: 'Violation Heat', value: stats.totalViolations > 200 ? 'High' : 'Normal', tone: stats.totalViolations > 200 ? 'danger' : 'live' },
-    { label: 'Appeals Inbox', value: publicAppeals.filter((appeal) => appeal.status === 'Pending Review').length, tone: 'accent' },
+    { label: 'Appeals Inbox', value: pendingAppeals, tone: 'accent' },
   ];
 
   const filteredAppeals = publicAppeals.filter((appeal) => {
@@ -274,11 +339,27 @@ const OfficerDashboard = () => {
     return statusMatch && haystack.includes(appealSearch.toLowerCase());
   });
 
+  const filteredComplaints = publicComplaints.filter((complaint) => {
+    const statusMatch = complaintFilter === 'All' || complaint.status === complaintFilter;
+    const haystack = [
+      complaint.contactName,
+      complaint.contactPhone,
+      complaint.contactEmail,
+      complaint.vehicleRegistrationNumber,
+      complaint.category,
+      complaint.priority,
+      complaint.locationName,
+      complaint.description,
+    ].join(' ').toLowerCase();
+    return statusMatch && haystack.includes(complaintSearch.toLowerCase());
+  });
+
   const updateViolationForm = (field, value) => {
     setViolationForm((current) => {
       const next = { ...current, [field]: value };
       if (field === 'violationType' || field === 'severity') {
         next.fineAmount = calculateFineAmount(next.violationType, next.severity);
+        next.demeritPoints = calculateDemeritPoints(next.violationType, next.severity);
       }
       return next;
     });
@@ -321,6 +402,7 @@ const OfficerDashboard = () => {
           locationName: parsed.locationName || current.locationName,
           description: parsed.description || current.description || prompt,
           fineAmount: calculateFineAmount(violationType, severity),
+          demeritPoints: calculateDemeritPoints(violationType, severity),
         };
       });
       setOfficerAiMessage('Form filled from AI. Review it, then submit.');
@@ -332,8 +414,8 @@ const OfficerDashboard = () => {
   };
 
   const handleViolationSubmit = async () => {
-    const { registrationNumber, violationType, severity, locationName, fineAmount, ownerName, ownerPhone } = violationForm;
-    if (!registrationNumber || !locationName || !fineAmount || !ownerName || !ownerPhone) {
+    const { registrationNumber, violationType, severity, locationName, fineAmount, demeritPoints, ownerName, ownerPhone } = violationForm;
+    if (!registrationNumber || !locationName || !fineAmount || !demeritPoints || !ownerName || !ownerPhone) {
       setViolationMsg({ text: 'Please fill all required fields.', type: 'error' });
       return;
     }
@@ -349,11 +431,13 @@ const OfficerDashboard = () => {
         locationName,
         description: violationForm.description,
         fineAmount: Number(fineAmount),
+        demeritPoints: Number(demeritPoints),
         ownerName,
         ownerPhone,
       });
       if (response.data.success) {
-        setViolationMsg({ text: `Violation and challan created. Challan #${response.data.challanNumber}`, type: 'success' });
+        const points = response.data?.demerit?.adjustedPoints ?? demeritPoints;
+        setViolationMsg({ text: `Violation and challan created. Challan #${response.data.challanNumber} added ${points} demerit point${Number(points) === 1 ? '' : 's'}.`, type: 'success' });
         setViolationForm(initialViolationForm);
         fetchDashboardData();
       } else {
@@ -437,27 +521,27 @@ const OfficerDashboard = () => {
       <section className="dashboard-section">
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon">📊</div>
+            <div className="stat-icon">ALL</div>
             <h3>Total Challans</h3>
-            <p className="stat-number">{stats.totalChallans}</p>
+            <p className="stat-number"><AnimatedNumber value={stats.totalChallans} /></p>
             <span className="stat-label">This Month</span>
           </div>
           <div className="stat-card">
-            <div className="stat-icon">✅</div>
+            <div className="stat-icon">PAID</div>
             <h3>Paid Challans</h3>
-            <p className="stat-number">{stats.paidChallans}</p>
+            <p className="stat-number"><AnimatedNumber value={stats.paidChallans} /></p>
             <span className="stat-label">Collection Rate: {stats.totalChallans ? Math.round((stats.paidChallans / stats.totalChallans) * 100) : 0}%</span>
           </div>
           <div className="stat-card">
-            <div className="stat-icon">⏳</div>
+            <div className="stat-icon">DUE</div>
             <h3>Pending Challans</h3>
-            <p className="stat-number">{stats.pendingChallans}</p>
+            <p className="stat-number"><AnimatedNumber value={stats.pendingChallans} /></p>
             <span className="stat-label">Awaiting Payment</span>
           </div>
           <div className="stat-card">
-            <div className="stat-icon">⚠️</div>
+            <div className="stat-icon">ALRT</div>
             <h3>Total Violations</h3>
-            <p className="stat-number">{stats.totalViolations}</p>
+            <p className="stat-number"><AnimatedNumber value={stats.totalViolations} /></p>
             <span className="stat-label">Reported This Month</span>
           </div>
         </div>
@@ -477,7 +561,7 @@ const OfficerDashboard = () => {
           {commandSignals.map((signal) => (
             <article key={signal.label} className={signal.tone}>
               <span>{signal.label}</span>
-              <strong>{signal.value}</strong>
+              <strong><AnimatedNumber value={signal.value} /></strong>
             </article>
           ))}
         </div>
@@ -492,7 +576,8 @@ const OfficerDashboard = () => {
         </article>
         <article className="officer-quick-card alert">
           <span>Citizen Appeals</span>
-          <strong>{publicAppeals.filter((appeal) => appeal.status === 'Pending Review').length} Pending</strong>
+          <strong className="officer-appeal-count"><AnimatedNumber value={pendingAppeals} /></strong>
+          <small className="officer-quick-meta">Pending review</small>
           <p>Every officer sees the same appeal inbox and can resolve cases.</p>
           <button type="button" onClick={() => setActiveTab('appeals')}>Review</button>
         </article>
@@ -502,11 +587,18 @@ const OfficerDashboard = () => {
           <p>Animated traffic grid with moving units and alert beacons.</p>
           <button type="button" onClick={() => setShow3D(true)}>Launch 3D</button>
         </article>
+        <article className="officer-quick-card complaint">
+          <span>Complaints</span>
+          <strong><AnimatedNumber value={openComplaints} /></strong>
+          <small className="officer-quick-meta">Open cases</small>
+          <p>Public road and service complaints move into one review queue.</p>
+          <button type="button" onClick={() => setActiveTab('complaints')}>Open Inbox</button>
+        </article>
       </section>
 
       <section className="dashboard-section">
         <div className="tabs-navigation">
-          {['overview', 'violations', 'challans', 'appeals', 'activity', 'add-violation', 'traffic-situation', 'profile'].map(tab => (
+          {['overview', 'violations', 'challans', 'appeals', 'complaints', 'activity', 'add-violation', 'traffic-situation', 'profile'].map(tab => (
             <button
               key={tab}
               className={`tab-button ${activeTab === tab ? 'active' : ''}`}
@@ -570,7 +662,12 @@ const OfficerDashboard = () => {
                 </div>
               </div>
 
-              {show3D && <div className="scene-3d-container"><h2>3D TRAFFIC VISUALIZATION</h2><TrafficScene3D /></div>}
+              {show3D && (
+                <div className="scene-3d-container">
+                  <h2>3D OFFICER PATROL MAP</h2>
+                  <TrafficScene3D officers={officerLocations} />
+                </div>
+              )}
             </div>
             <div className="dashboard-col-sidebar">
               <ViolationStats violations={violations} />
@@ -664,6 +761,73 @@ const OfficerDashboard = () => {
         </div>
       )}
 
+      {activeTab === 'complaints' && (
+        <div className="tab-content">
+          <section className="officer-appeals-panel officer-complaints-panel">
+            <div className="officer-appeals-header">
+              <div>
+                <h2>Public Complaints Inbox</h2>
+                <p>Road issues, signal faults, challan concerns, and service complaints submitted by citizens.</p>
+              </div>
+              <button type="button" onClick={fetchPublicComplaints} disabled={complaintsLoading}>
+                {complaintsLoading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
+
+            {complaintMessage && <div className="officer-appeal-message">{complaintMessage}</div>}
+
+            <div className="appeal-filter-bar">
+              <input
+                value={complaintSearch}
+                onChange={(event) => setComplaintSearch(event.target.value)}
+                placeholder="Search contact, vehicle, category, location..."
+              />
+              <select value={complaintFilter} onChange={(event) => setComplaintFilter(event.target.value)}>
+                {['All', 'Open', 'In Review', 'Resolved', 'Dismissed'].map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="officer-appeals-grid">
+              {filteredComplaints.length === 0 ? (
+                <div className="officer-empty-appeals">No public complaints submitted yet.</div>
+              ) : filteredComplaints.map((complaint) => {
+                const noteValue = complaintNotes[complaint.complaintId] ?? complaint.officerNote ?? '';
+                return (
+                  <article key={complaint.complaintId} className={`officer-appeal-card complaint-${String(complaint.status || '').toLowerCase().replace(/\s+/g, '-')}`}>
+                    <div className="officer-appeal-top">
+                      <div>
+                        <span>{complaint.status}</span>
+                        <h3>{complaint.category}</h3>
+                      </div>
+                      <strong>{complaint.priority}</strong>
+                    </div>
+                    <dl>
+                      <div><dt>Citizen</dt><dd>{complaint.contactName}</dd></div>
+                      <div><dt>Vehicle</dt><dd>{complaint.vehicleRegistrationNumber || '-'}</dd></div>
+                      <div><dt>Phone</dt><dd>{complaint.contactPhone || '-'}</dd></div>
+                      <div><dt>Location</dt><dd>{complaint.locationName || '-'}</dd></div>
+                    </dl>
+                    <p className="officer-appeal-reason">{complaint.description}</p>
+                    <textarea
+                      value={noteValue}
+                      onChange={(event) => setComplaintNotes((current) => ({ ...current, [complaint.complaintId]: event.target.value }))}
+                      placeholder="Staff note for this complaint..."
+                    />
+                    <div className="officer-appeal-actions">
+                      <button type="button" onClick={() => updateComplaintStatus(complaint, 'In Review')} disabled={complaintsLoading}>Review</button>
+                      <button type="button" onClick={() => updateComplaintStatus(complaint, 'Resolved')} disabled={complaintsLoading}>Resolve</button>
+                      <button type="button" onClick={() => updateComplaintStatus(complaint, 'Dismissed')} disabled={complaintsLoading}>Dismiss</button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      )}
+
       {activeTab === 'activity' && (
         <div className="tab-content">
           <section className="officer-activity-panel">
@@ -698,12 +862,22 @@ const OfficerDashboard = () => {
       {activeTab === 'add-violation' && (
         <div className="tab-content">
           <div style={{ maxWidth: 800, margin: '0 auto', backgroundColor: '#F8F4E8', border: '2px solid #09090B', padding: '30px', borderRadius: '8px' }}>
-            <h2 style={{ marginBottom: '24px' }}>🚨 Add Vehicle Violation and Generate Challan</h2>
+            <h2 style={{ marginBottom: '24px' }}>Add Vehicle Violation and Generate Challan</h2>
 
             <div className="officer-ai-fill">
               <div>
                 <strong>AI Auto-Fill</strong>
                 <p>Type one rough field note and Gemini will prepare the challan form.</p>
+              </div>
+              <div className="officer-ai-presets">
+                {[
+                  'ABC123 no helmet at Saddar, owner Ali Khan, 03001234567, minor',
+                  'KHI7788 speeding 95 in 60 zone at University Road, owner Sara Ahmed, 03111222333, major',
+                ].map((preset) => (
+                  <button key={preset} type="button" onClick={() => setOfficerAiPrompt(preset)}>
+                    Use Preset
+                  </button>
+                ))}
               </div>
               <textarea
                 value={officerAiPrompt}
@@ -759,6 +933,18 @@ const OfficerDashboard = () => {
                 <span style={{ display: 'block', marginTop: '4px', color: '#555', fontSize: '11px' }}>Auto-calculated from violation type and severity.</span>
               </label>
               <label style={labelStyle}>
+                Demerit Points *
+                <input
+                  style={inputStyle}
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={violationForm.demeritPoints}
+                  onChange={e => updateViolationForm('demeritPoints', e.target.value)}
+                />
+                <span style={{ display: 'block', marginTop: '4px', color: '#555', fontSize: '11px' }}>Speeding starts at 4 points. License cancels at 100.</span>
+              </label>
+              <label style={labelStyle}>
                 Location *
                 <input style={inputStyle} placeholder="e.g. Main Boulevard, Karachi" value={violationForm.locationName}
                   onChange={e => updateViolationForm('locationName', e.target.value)} />
@@ -797,7 +983,7 @@ const OfficerDashboard = () => {
       {activeTab === 'traffic-situation' && (
         <div className="tab-content">
           <div style={{ maxWidth: 800, margin: '0 auto', backgroundColor: '#F8F4E8', border: '2px solid #09090B', padding: '30px', borderRadius: '8px' }}>
-            <h2 style={{ marginBottom: '24px' }}>📍 Report Traffic Situation</h2>
+            <h2 style={{ marginBottom: '24px' }}>Report Traffic Situation</h2>
             <p style={{ marginBottom: '20px', color: '#555' }}>This will be visible to the public on the Traffic Information page.</p>
 
             {trafficMsg.text && (

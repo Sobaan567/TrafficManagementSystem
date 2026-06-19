@@ -1,4 +1,5 @@
 import React from 'react';
+import AnimatedNumber from '../common/AnimatedNumber';
 import './ViolationStats.css';
 
 const ViolationStats = ({ violations, detailed = false }) => {
@@ -52,7 +53,7 @@ const ViolationStats = ({ violations, detailed = false }) => {
           {Object.entries(violationTypes).map(([type, count]) => (
             <div key={type} className="violation-type-card">
               <div className="type-label">{type}</div>
-              <div className="type-count">{count}</div>
+              <div className="type-count"><AnimatedNumber value={count} /></div>
               <div className="type-bar">
                 <div
                   className="type-bar-fill"

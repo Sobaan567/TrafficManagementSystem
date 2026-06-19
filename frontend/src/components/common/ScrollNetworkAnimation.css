@@ -1,0 +1,218 @@
+.scroll-network-section {
+  --network-progress: 0;
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.055) 1px, transparent 1px),
+    #F8F4E8;
+  background-size: 32px 32px;
+  border-bottom: 5px solid #09090B;
+  min-height: 150vh;
+  position: relative;
+}
+
+.scroll-network-sticky {
+  align-items: center;
+  display: grid;
+  gap: 36px;
+  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+  margin: 0 auto;
+  max-width: 1200px;
+  min-height: 100vh;
+  padding: 72px 20px;
+  position: sticky;
+  top: 0;
+}
+
+.scroll-network-copy span {
+  background: #09090B;
+  border: 3px solid #09090B;
+  box-shadow: 5px 5px 0 #D2E823;
+  color: #D2E823;
+  display: inline-block;
+  font-weight: 900;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.scroll-network-copy h2 {
+  font-size: clamp(2.2rem, 5vw, 4.6rem);
+  line-height: 0.95;
+  margin: 0 0 16px;
+  max-width: 560px;
+}
+
+.scroll-network-copy p {
+  color: #3d3d3d;
+  font-size: 1.06rem;
+  font-weight: 850;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 520px;
+}
+
+.scroll-network-stage {
+  aspect-ratio: 1.2;
+  background:
+    radial-gradient(circle at center, rgba(210, 232, 35, 0.46), transparent 27%),
+    linear-gradient(135deg, #fff 0 48%, #D2E823 48% 53%, #fff 53% 100%);
+  border: 5px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 14px 14px 0 #09090B;
+  min-height: 430px;
+  overflow: hidden;
+  position: relative;
+}
+
+.scroll-network-stage::before,
+.scroll-network-stage::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+}
+
+.scroll-network-stage::before {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.08) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.08) 2px, transparent 2px);
+  background-size: 42px 42px;
+  inset: 0;
+}
+
+.scroll-network-stage::after {
+  border: 3px solid rgba(9, 9, 11, 0.16);
+  border-radius: 50%;
+  inset: 17%;
+  transform: scale(calc(0.78 + (var(--network-progress) * 0.36)));
+}
+
+.scroll-network-lines {
+  inset: 0;
+  overflow: visible;
+  position: absolute;
+  z-index: 1;
+}
+
+.scroll-network-lines line {
+  stroke: #09090B;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--network-progress));
+  stroke-linecap: square;
+  stroke-width: calc(0.7 + (var(--network-progress) * 1.8));
+  transition: stroke-width 120ms linear;
+  vector-effect: non-scaling-stroke;
+}
+
+.scroll-network-core,
+.scroll-network-node {
+  align-items: center;
+  border: 4px solid #09090B;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  z-index: 2;
+}
+
+.scroll-network-core {
+  background: #09090B;
+  border-color: #D2E823;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 calc(var(--network-progress) * 20px) rgba(210, 232, 35, 0.24),
+    10px 10px 0 #09090B;
+  color: #F8F4E8;
+  flex-direction: column;
+  height: 132px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(calc(0.78 + (var(--network-progress) * 0.55)));
+  width: 132px;
+}
+
+.scroll-network-core strong {
+  color: #D2E823;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 0.8;
+}
+
+.scroll-network-core span {
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.scroll-network-node {
+  background: #F8F4E8;
+  border-radius: 8px;
+  box-shadow: 7px 7px 0 #09090B;
+  min-height: 54px;
+  min-width: 116px;
+  opacity: calc(0.34 + (var(--network-progress) * 0.66));
+  padding: 10px 12px;
+  text-align: center;
+  transform: translate(-50%, -50%) scale(calc(0.82 + (var(--network-progress) * 0.18)));
+}
+
+.scroll-network-node:nth-of-type(3n) {
+  background: #D2E823;
+}
+
+.scroll-network-node span {
+  font-size: 0.78rem;
+  font-weight: 950;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .scroll-network-section {
+    min-height: auto;
+  }
+
+  .scroll-network-sticky {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 58px 20px;
+    position: relative;
+  }
+
+  .scroll-network-stage {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 560px) {
+  .scroll-network-sticky {
+    padding: 48px 14px;
+  }
+
+  .scroll-network-stage {
+    aspect-ratio: 0.82;
+    min-height: 500px;
+  }
+
+  .scroll-network-core {
+    height: 112px;
+    width: 112px;
+  }
+
+  .scroll-network-core strong {
+    font-size: 2.4rem;
+  }
+
+  .scroll-network-node {
+    min-width: 96px;
+    padding: 8px 10px;
+  }
+
+  .scroll-network-node span {
+    font-size: 0.68rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-network-section {
+    --network-progress: 1;
+  }
+}

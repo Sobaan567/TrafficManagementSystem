@@ -195,7 +195,7 @@ export default function GeminiChatbot() {
             <div>
               <span>Gemini 2.5 Flash</span>
               <h2>TMS Assistant</h2>
-              <small>{location.pathname}</small>
+              <small>{location.pathname === '/' ? 'Home' : location.pathname.replace(/^\//, '')}</small>
             </div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chatbot">X</button>
           </header>

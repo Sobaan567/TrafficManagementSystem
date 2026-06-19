@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import SlideDownText from '../components/common/SlideDownText';
+import LightBeamButton from '../components/common/LightBeamButton';
 import './LoginPage.css';
 
 const LoginPage = () => {
@@ -38,22 +40,22 @@ const LoginPage = () => {
         {/* Left Side - Branding */}
         <div className="login-brand-section">
           <div className="brand-content">
-            <h1 className="glitch-text">TRAFFIC</h1>
+            <h1 className="glitch-text"><SlideDownText text="TRAFFIC" /></h1>
             <h2>MANAGEMENT</h2>
             <p className="brand-subtitle">
               Advanced Traffic Control & E-Challan System
             </p>
             <div className="brand-features">
               <div className="feature">
-                <span className="feature-icon">🚗</span>
+                <span className="feature-icon">RT</span>
                 <span>Real-Time Tracking</span>
               </div>
               <div className="feature">
-                <span className="feature-icon">📍</span>
+                <span className="feature-icon">GPS</span>
                 <span>GPS Mapping</span>
               </div>
               <div className="feature">
-                <span className="feature-icon">📋</span>
+                <span className="feature-icon">EC</span>
                 <span>E-Challan System</span>
               </div>
             </div>
@@ -68,7 +70,7 @@ const LoginPage = () => {
 
             {authError && (
               <div className="error-alert">
-                <span className="error-icon">⚠</span>
+                <span className="error-icon">!</span>
                 {authError}
               </div>
             )}
@@ -121,9 +123,9 @@ const LoginPage = () => {
                     </Link>
                   </div>
 
-                  <button
+                  <LightBeamButton
                     type="submit"
-                    className="btn btn-primary btn-login"
+                    className="btn-login beam-wide"
                     disabled={isSubmitting || isLoading}
                   >
                     {isLoading ? (
@@ -134,20 +136,11 @@ const LoginPage = () => {
                     ) : (
                       'LOGIN'
                     )}
-                  </button>
+                  </LightBeamButton>
                 </Form>
               )}
             </Formik>
 
-            <div className="form-divider">
-              <span>Demo Credentials</span>
-            </div>
-
-            <div className="demo-creds">
-              <p><strong>Usernames:</strong> officer1, officer2, officer3</p>
-              <p><strong>Password:</strong> password123</p>
-              <p><strong>Admin:</strong> use an account with Role = Admin</p>
-            </div>
           </div>
         </div>
       </div>

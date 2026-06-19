@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import GoogleMapReact from 'google-map-react';
 import api from '../../services/api';
+import SlideDownText from '../../components/common/SlideDownText';
 
 const inputStyle = {
   padding: '12px',
@@ -25,6 +27,33 @@ const secondaryButtonStyle = {
 };
 
 const isSettledPayment = (status) => ['paid', 'waived'].includes(String(status || '').toLowerCase());
+
+const createTrainingChallans = (vehicle = 'KHI-2047') => [
+  {
+    challanId: 'quick-public-1',
+    challanNumber: 'TMS-record-1001',
+    ownerName: 'Ali Khan',
+    issueDateTime: new Date().toISOString(),
+    fineAmount: 5000,
+    demeritPoints: 8,
+    paymentStatus: 'Unpaid',
+    violation: { violationType: 'Red Light Violation' },
+    location: { locationName: 'Shahrah-e-Faisal', latitude: 24.8607, longitude: 67.0011 },
+    vehicleRegistrationNumber: vehicle,
+  },
+  {
+    challanId: 'quick-public-2',
+    challanNumber: 'TMS-record-1005',
+    ownerName: 'Ali Khan',
+    issueDateTime: new Date(Date.now() - 86400000).toISOString(),
+    fineAmount: 1000,
+    demeritPoints: 3,
+    paymentStatus: 'Paid',
+    violation: { violationType: 'No Seat Belt' },
+    location: { locationName: 'Saddar', latitude: 24.8586, longitude: 67.0281 },
+    vehicleRegistrationNumber: vehicle,
+  },
+];
 
 const safeDistanceToMouse = (point, mouse) => {
   if (!point || !mouse) return Number.MAX_SAFE_INTEGER;
@@ -123,6 +152,7 @@ const ChallanMap = ({ challans }) => {
 };
 
 export default function ChallanTracker() {
+  const [searchParams] = useSearchParams();
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [challans, setChallans] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -140,17 +170,77 @@ export default function ChallanTracker() {
     expiry: '',
     cvv: ''
   });
+  const [trainingMode, setTrainingMode] = useState(false);
+  const [verifyToken, setVerifyToken] = useState(searchParams.get('verify') || '');
+  const [verifiedChallan, setVerifiedChallan] = useState(null);
 
-  const searchChallans = async () => {
-    if (!registrationNumber.trim()) {
+  useEffect(() => {
+    const vehicleFromLink = searchParams.get('vehicle');
+    if (vehicleFromLink) {
+      setRegistrationNumber(vehicleFromLink.toUpperCase());
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const vehicleFromLink = searchParams.get('vehicle');
+    if (vehicleFromLink) {
+      searchChallans(vehicleFromLink);
+    }
+    const tokenFromLink = searchParams.get('verify');
+    if (tokenFromLink) {
+      verifyChallanToken(tokenFromLink);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const verifyChallanToken = async (token = verifyToken) => {
+    const cleanToken = String(token || '').trim();
+    if (!cleanToken) {
+      setError('Enter a challan verification token.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setVerifiedChallan(null);
+    try {
+      const response = await api.get(`/public/verify-challan/${encodeURIComponent(cleanToken)}`);
+      if (response.data?.verified) {
+        setVerifiedChallan(response.data.data);
+        setSearched(false);
+      } else {
+        setError(response.data?.message || 'Challan could not be verified.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Challan verification failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadQuickLookup = (vehicle = registrationNumber || 'KHI-2047') => {
+    setRegistrationNumber(vehicle.toUpperCase());
+    setChallans(createTrainingChallans(vehicle.toUpperCase()));
+    setPaymentComplete(false);
+    setShowPaymentForm(false);
+    setError('');
+    setSearched(true);
+    setLoading(false);
+    setTrainingMode(true);
+  };
+
+  const searchChallans = async (overrideRegistrationNumber) => {
+    const vehicleNumber = String(overrideRegistrationNumber || registrationNumber).trim().toUpperCase();
+    if (!vehicleNumber) {
       alert('Please enter vehicle registration number');
       return;
     }
 
+    setRegistrationNumber(vehicleNumber);
     setLoading(true);
     setError('');
+    setTrainingMode(false);
     try {
-      const response = await api.get(`/public/vehicle/${registrationNumber}`);
+      const response = await api.get(`/public/vehicle/${vehicleNumber}`);
       if (response.data.success) {
         const data = response.data.data?.challans || [];
         setChallans(Array.isArray(data) ? data : []);
@@ -189,16 +279,18 @@ export default function ChallanTracker() {
     }));
   };
 
-  const completeFakePayment = async (event) => {
+  const completeCardPayment = async (event) => {
     event.preventDefault();
     setPaymentLoading(true);
     setPaymentError('');
 
     try {
-      await api.post(`/public/vehicle/${registrationNumber}/payment`, {
-        paymentMethod: 'Fake Card',
-        cardLast4: cardDetails.cardNumber.replace(/\D/g, '').slice(-4)
-      });
+      if (!trainingMode) {
+        await api.post(`/public/vehicle/${registrationNumber}/payment`, {
+          paymentMethod: 'Card Payment',
+          cardLast4: cardDetails.cardNumber.replace(/\D/g, '').slice(-4)
+        });
+      }
 
       setChallans((currentChallans) =>
         currentChallans.map((challan) => ({
@@ -257,6 +349,7 @@ export default function ChallanTracker() {
         <td>${challan.violation?.violationType || '-'}</td>
         <td>${challan.location?.locationName || '-'}</td>
         <td>Rs.${challan.fineAmount || 0}</td>
+        <td>${challan.demeritPoints || 0}</td>
         <td>${challan.paymentStatus || '-'}</td>
       </tr>
     `).join('');
@@ -291,7 +384,7 @@ export default function ChallanTracker() {
               <div class="box"><strong>Vehicle:</strong><br>${registrationNumber}</div>
               <div class="box"><strong>Paid On:</strong><br>${paidDate}</div>
               <div class="box"><strong>Total Amount:</strong><br>Rs.${getTotalAmount()}</div>
-              <div class="box"><strong>Payment Method:</strong><br>Fake Card</div>
+              <div class="box"><strong>Payment Method:</strong><br>Card Payment</div>
             </div>
             <table>
               <thead>
@@ -301,6 +394,7 @@ export default function ChallanTracker() {
                   <th>Violation</th>
                   <th>Location</th>
                   <th>Amount</th>
+                  <th>Demerits</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -313,7 +407,7 @@ export default function ChallanTracker() {
               <div>
                 <h3>Receipt Verification</h3>
                 <p><strong>Verification Code:</strong> ${verificationCode}</p>
-                <p>This code confirms the demo payment record generated by the Traffic Management System.</p>
+                <p>This code verifies the payment record generated by the Traffic Management System.</p>
               </div>
             </div>
             <div class="paid">Payment complete. This receipt can be saved as PDF from the print dialog.</div>
@@ -327,10 +421,11 @@ export default function ChallanTracker() {
   };
 
   const allChallansPaid = challans.length > 0 && challans.every((challan) => isSettledPayment(challan.paymentStatus));
+  const linkedChallan = searchParams.get('challan');
 
   return (
     <div style={{ padding: '30px 20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '30px', color: '#09090B' }}>Check Your Challans</h1>
+      <h1 style={{ marginBottom: '30px', color: '#09090B' }}><SlideDownText text="Check Your Challans" /></h1>
 
       <div style={{
         backgroundColor: '#F8F4E8',
@@ -350,7 +445,7 @@ export default function ChallanTracker() {
             style={{ ...inputStyle, flex: 1, minWidth: '200px' }}
           />
           <button
-            onClick={searchChallans}
+            onClick={() => searchChallans()}
             disabled={loading}
             style={{
               ...primaryButtonStyle,
@@ -360,8 +455,84 @@ export default function ChallanTracker() {
           >
             {loading ? 'Searching...' : 'Search'}
           </button>
+          <button onClick={() => loadQuickLookup()} style={secondaryButtonStyle}>
+            Quick Lookup
+          </button>
         </div>
+        {linkedChallan && (
+          <div style={{
+            marginTop: '14px',
+            padding: '12px',
+            backgroundColor: '#09090B',
+            border: '2px solid #D2E823',
+            color: '#F8F4E8',
+            fontWeight: 900
+          }}>
+            QR link opened for challan {linkedChallan}
+          </div>
+        )}
       </div>
+
+      <div style={{
+        backgroundColor: '#09090B',
+        color: '#F8F4E8',
+        padding: '24px',
+        border: '3px solid #D2E823',
+        marginBottom: '30px',
+        borderRadius: '8px',
+        boxShadow: '5px 5px 0 #D2E823'
+      }}>
+        <p style={{ marginBottom: '15px', fontWeight: 900, textTransform: 'uppercase' }}>QR Challan Verification</p>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            placeholder="Paste QR token"
+            value={verifyToken}
+            onChange={(e) => setVerifyToken(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && verifyChallanToken()}
+            style={{ ...inputStyle, flex: 1, minWidth: '220px' }}
+          />
+          <button
+            type="button"
+            onClick={() => verifyChallanToken()}
+            disabled={loading}
+            style={primaryButtonStyle}
+          >
+            Verify QR
+          </button>
+        </div>
+        {verifiedChallan && (
+          <div style={{
+            marginTop: '18px',
+            backgroundColor: '#F8F4E8',
+            border: '2px solid #D2E823',
+            borderRadius: '8px',
+            color: '#09090B',
+            display: 'grid',
+            gap: '8px',
+            padding: '16px'
+          }}>
+            <strong style={{ fontSize: '22px' }}>Verified: {verifiedChallan.challanNumber}</strong>
+            <span>{verifiedChallan.registrationNumber} - {verifiedChallan.violationType} - {verifiedChallan.locationName}</span>
+            <span>Fine Rs.{Number(verifiedChallan.fineAmount || 0).toLocaleString()} - {verifiedChallan.demeritPoints || 0} demerit points - {verifiedChallan.paymentStatus}</span>
+          </div>
+        )}
+      </div>
+
+      {trainingMode && (
+        <div style={{
+          backgroundColor: '#09090B',
+          border: '3px solid #D2E823',
+          borderRadius: '8px',
+          boxShadow: '5px 5px 0 #D2E823',
+          color: '#F8F4E8',
+          fontWeight: 900,
+          marginBottom: '24px',
+          padding: '14px'
+        }}>
+          Quick Lookup Active: records are loaded for payment, AI explanation, map, and receipt workflow.
+        </div>
+      )}
 
       {searched && (
         <>
@@ -426,6 +597,7 @@ export default function ChallanTracker() {
                       <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Violation</th>
                       <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Location</th>
                       <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Amount</th>
+                      <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Demerits</th>
                       <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>Status</th>
                       <th style={{ padding: '15px', textAlign: 'left', fontWeight: 'bold' }}>AI</th>
                     </tr>
@@ -439,6 +611,21 @@ export default function ChallanTracker() {
                         <td style={{ padding: '12px' }}>{challan.violation?.violationType || '-'}</td>
                         <td style={{ padding: '12px' }}>{challan.location?.locationName || '-'}</td>
                         <td style={{ padding: '12px' }}>Rs.{challan.fineAmount}</td>
+                        <td style={{ padding: '12px' }}>
+                          <span style={{
+                            backgroundColor: '#09090B',
+                            border: '2px solid #D2E823',
+                            borderRadius: '999px',
+                            color: '#D2E823',
+                            display: 'inline-block',
+                            fontWeight: 900,
+                            minWidth: '38px',
+                            padding: '5px 9px',
+                            textAlign: 'center'
+                          }}>
+                            {Number(challan.demeritPoints || 0)}
+                          </span>
+                        </td>
                         <td style={{
                           padding: '12px',
                           fontWeight: 'bold',
@@ -513,7 +700,7 @@ export default function ChallanTracker() {
                     </button>
                   </>
                 ) : showPaymentForm ? (
-                  <form onSubmit={completeFakePayment} style={{ display: 'grid', gap: '12px', maxWidth: '520px' }}>
+                  <form onSubmit={completeCardPayment} style={{ display: 'grid', gap: '12px', maxWidth: '520px' }}>
                     {paymentError && (
                       <div style={{
                         padding: '12px',
@@ -528,7 +715,7 @@ export default function ChallanTracker() {
                     <input
                       type="text"
                       inputMode="numeric"
-                      placeholder="Fake card number"
+                      placeholder="Card number"
                       value={cardDetails.cardNumber}
                       onChange={(e) => updateCardDetails('cardNumber', e.target.value)}
                       required

@@ -87,13 +87,131 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 0.85;
 }
 
 h1 {
   font-size: clamp(2rem, 8vw, 8rem);
   margin-bottom: var(--spacing-lg);
+}
+
+.clip-slide-text {
+  display: inline-flex;
+  flex-wrap: wrap;
+  overflow: visible;
+  vertical-align: baseline;
+}
+
+.clip-slide-word {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.clip-slide-space {
+  display: inline-block;
+  min-width: 0.32em;
+  white-space: pre;
+}
+
+.clip-slide-letter {
+  animation: clipSlideDownLetter 620ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--letter-index) * 34ms);
+  clip-path: inset(0 0 100% 0);
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(-0.9em);
+  will-change: transform, clip-path, opacity;
+}
+
+@keyframes clipSlideDownLetter {
+  0% {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+    transform: translateY(-0.9em);
+  }
+  70% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clip-slide-letter {
+    animation: none;
+    clip-path: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.officer-dashboard .dashboard-header,
+.admin-hero,
+.public-hero,
+.citizen-topbar,
+.traffic-command-hero,
+.challan-hero {
+  position: relative;
+}
+
+.officer-dashboard .dashboard-header::after,
+.admin-hero::before,
+.public-hero::before,
+.citizen-topbar::before,
+.traffic-command-hero::before,
+.challan-hero::before {
+  background: #09090B;
+  border: 2px solid #D2E823;
+  color: #D2E823;
+  content: 'SYSTEM ONLINE';
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  padding: 8px 10px;
+  position: absolute;
+  right: 16px;
+  text-transform: uppercase;
+  top: -18px;
+  z-index: 5;
+}
+
+.admin-hero::before {
+  content: 'ADMIN ONLINE';
+}
+
+.public-hero::before {
+  content: 'PUBLIC ONLINE';
+  display: none;
+}
+
+.citizen-topbar::before {
+  content: 'CITIZEN ONLINE';
+}
+
+.traffic-command-hero::before {
+  content: 'ROADS ONLINE';
+}
+
+.challan-hero::before {
+  content: 'CHALLAN ONLINE';
+}
+
+@media (max-width: 720px) {
+  .officer-dashboard .dashboard-header::after,
+  .admin-hero::before,
+  .public-hero::before,
+  .citizen-topbar::before,
+  .traffic-command-hero::before,
+  .challan-hero::before {
+    display: none;
+  }
 }
 
 h2 {
@@ -133,25 +251,8 @@ a:hover {
    CUSTOM CURSOR
    ============================================================================ */
 
-:root {
-  cursor: none;
-}
-
 .custom-cursor {
-  position: fixed;
-  width: 32px;
-  height: 32px;
-  background-color: white;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 10000;
-  mix-blend-mode: difference;
-  transform: translate(-50%, -50%);
-  transition: transform 100ms ease-out;
-}
-
-.custom-cursor.hover {
-  transform: translate(-50%, -50%) scale(2.5);
+  display: none;
 }
 
 /* ============================================================================
@@ -458,7 +559,7 @@ textarea {
   font-family: var(--font-display);
   font-size: 1.5rem;
   text-transform: uppercase;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   color: var(--color-primary);
 }
 
@@ -679,4 +780,1338 @@ textarea {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent);
+}
+
+/* ============================================================================
+   FRONTEND POLISH PACK - STATIC, FAST, ORIGINAL THEME
+   ============================================================================ */
+
+.main-content {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.028) 1px, transparent 1px),
+    var(--color-bg);
+  background-size: 36px 36px;
+}
+
+.home-page,
+.public-dashboard,
+.citizen-page,
+.admin-page,
+.officer-dashboard,
+.traffic-command-page,
+.challan-command-page,
+.reports-page {
+  background:
+    radial-gradient(circle at top right, rgba(210, 232, 35, 0.22), transparent 260px),
+    linear-gradient(rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    var(--color-bg) !important;
+  background-size: auto, 34px 34px, 34px 34px, auto !important;
+}
+
+.hero-section,
+.public-hero-copy,
+.citizen-topbar,
+.admin-hero,
+.dashboard-header,
+.traffic-command-hero,
+.challan-hero,
+.reports-hero {
+  overflow: hidden;
+}
+
+.hero-section::before,
+.public-hero-copy::after,
+.citizen-topbar::after,
+.admin-hero::after,
+.traffic-command-hero::after,
+.challan-hero::after {
+  pointer-events: none;
+}
+
+.stat-card,
+.feature-card,
+.public-stat-card,
+.public-chart-panel,
+.public-map-panel,
+.public-alert-panel,
+.public-services article,
+.citizen-stat-card,
+.citizen-panel,
+.citizen-service-grid article,
+.admin-card-grid article,
+.admin-panel,
+.admin-report-hero article,
+.admin-intelligence-grid article,
+.challan-stats-grid article,
+.challan-table-panel,
+.challan-priority-panel,
+.traffic-command-stats article,
+.traffic-radar-panel,
+.traffic-feed-panel,
+.officer-quick-card {
+  backdrop-filter: none;
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.stat-card:hover,
+.feature-card:hover,
+.public-stat-card:hover,
+.public-chart-panel:hover,
+.public-map-panel:hover,
+.public-alert-panel:hover,
+.public-services article:hover,
+.citizen-stat-card:hover,
+.citizen-panel:hover,
+.citizen-service-grid article:hover,
+.admin-card-grid article:hover,
+.admin-panel:hover,
+.admin-report-hero article:hover,
+.admin-intelligence-grid article:hover,
+.challan-stats-grid article:hover,
+.challan-table-panel:hover,
+.challan-priority-panel:hover,
+.traffic-command-stats article:hover,
+.traffic-radar-panel:hover,
+.traffic-feed-panel:hover,
+.officer-quick-card:hover {
+  box-shadow: 9px 9px 0 #09090B !important;
+  transform: translate(-2px, -2px);
+}
+
+.stat-icon,
+.feature-icon,
+.error-icon {
+  align-items: center;
+  background: #09090B;
+  border: 2px solid #D2E823;
+  border-radius: 8px;
+  color: #D2E823;
+  display: inline-flex;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 36px;
+  min-width: 44px;
+  padding: 6px 8px;
+  text-transform: uppercase;
+}
+
+.stat-card {
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    #fff;
+  background-size: 22px 22px;
+}
+
+.tab-button,
+.admin-tabs button,
+.citizen-tabs button,
+.public-btn,
+.challan-hero-actions button,
+.challan-hero-actions a,
+.traffic-hero-actions button,
+.traffic-hero-actions a,
+.admin-form-actions button,
+.admin-row-actions button,
+.citizen-submit,
+.citizen-pay-btn,
+.citizen-icon-btn {
+  box-shadow: 3px 3px 0 #09090B;
+}
+
+.tab-button:hover,
+.admin-tabs button:hover,
+.citizen-tabs button:hover,
+.public-btn:hover,
+.challan-hero-actions button:hover,
+.challan-hero-actions a:hover,
+.traffic-hero-actions button:hover,
+.traffic-hero-actions a:hover,
+.admin-form-actions button:hover,
+.admin-row-actions button:hover,
+.citizen-submit:hover,
+.citizen-pay-btn:hover:not(:disabled),
+.citizen-icon-btn:hover:not(:disabled) {
+  box-shadow: 1px 1px 0 #09090B;
+  transform: translate(2px, 2px);
+}
+
+input,
+select,
+textarea {
+  box-shadow: 2px 2px 0 rgba(9, 9, 11, 0.22);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 3px solid rgba(210, 232, 35, 0.62);
+  outline-offset: 1px;
+}
+
+table {
+  background: #fff;
+}
+
+thead th {
+  letter-spacing: 0;
+}
+
+.admin-history-table tbody tr:hover,
+.citizen-table-panel tbody tr:hover,
+.challan-table-panel tbody tr:hover {
+  background: rgba(210, 232, 35, 0.16);
+}
+
+.public-map,
+.citizen-map-wrap,
+.public-chart-box,
+.citizen-chart-box {
+  box-shadow: inset 0 0 0 3px rgba(9, 9, 11, 0.05);
+}
+
+.notification-panel,
+.global-search-results {
+  z-index: 9000;
+}
+
+@media (max-width: 720px) {
+  .home-page,
+  .public-dashboard,
+  .citizen-page,
+  .admin-page,
+  .officer-dashboard,
+  .traffic-command-page,
+  .challan-command-page {
+    background-size: auto, 28px 28px, 28px 28px, auto !important;
+  }
+
+  .stat-card:hover,
+  .feature-card:hover,
+  .public-stat-card:hover,
+  .public-chart-panel:hover,
+  .public-map-panel:hover,
+  .public-alert-panel:hover,
+  .public-services article:hover,
+  .citizen-stat-card:hover,
+  .citizen-panel:hover,
+  .admin-card-grid article:hover,
+  .admin-panel:hover,
+  .challan-stats-grid article:hover,
+  .traffic-command-stats article:hover {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+   DASHBOARD BENTO SKIN - SHARED NEON CARD LANGUAGE
+   ============================================================================ */
+
+.stat-card,
+.officer-quick-card,
+.command-signal-grid article,
+.admin-card-grid article,
+.admin-report-hero article,
+.admin-intelligence-grid article,
+.challan-stats-grid article,
+.traffic-command-stats article,
+.reports-card-grid article,
+.public-stat-card,
+.citizen-stat-card,
+.citizen-service-grid article,
+.citizen-command-deck article {
+  background:
+    radial-gradient(circle at 70% 58%, rgba(210, 232, 35, 0.16), transparent 34%),
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    #09090B !important;
+  background-size: auto, 24px 24px, 24px 24px, auto !important;
+  border: 3px solid #09090B !important;
+  border-radius: 8px !important;
+  box-shadow: 8px 8px 0 #09090B !important;
+  color: #F8F4E8 !important;
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-card::after,
+.officer-quick-card::after,
+.command-signal-grid article::after,
+.admin-card-grid article::after,
+.admin-report-hero article::after,
+.admin-intelligence-grid article::after,
+.challan-stats-grid article::after,
+.traffic-command-stats article::after,
+.reports-card-grid article::after,
+.public-stat-card::after,
+.citizen-stat-card::after,
+.citizen-service-grid article::after,
+.citizen-command-deck article::after {
+  background: #D2E823;
+  border: 3px solid #09090B;
+  content: "";
+  height: 58px;
+  pointer-events: none;
+  position: absolute;
+  right: -26px;
+  top: -20px;
+  transform: rotate(11deg);
+  width: 150px;
+  z-index: 0;
+}
+
+.stat-card > *,
+.officer-quick-card > *,
+.command-signal-grid article > *,
+.admin-card-grid article > *,
+.admin-report-hero article > *,
+.admin-intelligence-grid article > *,
+.challan-stats-grid article > *,
+.traffic-command-stats article > *,
+.reports-card-grid article > *,
+.public-stat-card > *,
+.citizen-stat-card > *,
+.citizen-service-grid article > *,
+.citizen-command-deck article > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card h3,
+.stat-card .stat-number,
+.command-signal-grid article strong,
+.admin-card-grid article strong,
+.admin-report-hero article strong,
+.admin-intelligence-grid article strong,
+.challan-stats-grid article strong,
+.traffic-command-stats article strong,
+.reports-card-grid article strong,
+.public-stat-card strong,
+.citizen-stat-card strong,
+.citizen-service-grid article strong,
+.citizen-command-deck article strong {
+  color: #F8F4E8 !important;
+  text-shadow: 3px 3px 0 rgba(210, 232, 35, 0.2);
+}
+
+.stat-card span,
+.stat-card .stat-label,
+.command-signal-grid article span,
+.admin-card-grid article span,
+.admin-report-hero article span,
+.admin-intelligence-grid article span,
+.challan-stats-grid article span,
+.traffic-command-stats article span,
+.reports-card-grid article span,
+.public-stat-card span,
+.citizen-stat-card span,
+.citizen-service-grid article span,
+.citizen-command-deck article span {
+  color: #D2E823 !important;
+}
+
+.admin-card-grid article small,
+.admin-report-hero article small,
+.admin-intelligence-grid article small,
+.challan-stats-grid article small,
+.reports-card-grid article small,
+.public-stat-card p,
+.citizen-service-grid article small,
+.citizen-command-deck article small {
+  color: #d8d3c4 !important;
+  font-weight: 900;
+}
+
+.admin-panel,
+.reports-panel,
+.challan-table-panel,
+.challan-priority-panel,
+.traffic-radar-panel,
+.traffic-feed-panel,
+.public-chart-panel,
+.public-map-panel,
+.public-alert-panel,
+.citizen-panel {
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.07) 1px, transparent 1px),
+    #09090B !important;
+  background-size: 24px 24px !important;
+  border: 3px solid #09090B !important;
+  box-shadow: 8px 8px 0 #09090B !important;
+  color: #F8F4E8 !important;
+}
+
+.admin-panel h2,
+.admin-panel h3,
+.reports-panel h2,
+.reports-panel h3,
+.challan-table-panel h2,
+.challan-priority-panel h2,
+.traffic-radar-panel h2,
+.traffic-feed-panel h2,
+.public-chart-panel h2,
+.public-map-panel h2,
+.public-alert-panel h2,
+.citizen-panel h2,
+.citizen-panel h3 {
+  color: #F8F4E8 !important;
+}
+
+.admin-panel p,
+.reports-panel p,
+.challan-table-panel p,
+.challan-priority-panel p,
+.traffic-radar-panel p,
+.traffic-feed-panel p,
+.public-chart-panel p,
+.public-map-panel p,
+.public-alert-panel p,
+.citizen-panel p {
+  color: #d8d3c4 !important;
+}
+
+.admin-panel table,
+.challan-table-panel table,
+.citizen-panel table {
+  color: #09090B;
+}
+
+.public-stat-card strong {
+  font-size: clamp(2rem, 3.4vw, 3.2rem) !important;
+  line-height: 0.95 !important;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-bento-fx {
+  --bento-x: 50%;
+  --bento-y: 50%;
+  isolation: isolate;
+}
+
+.dashboard-bento-fx::before {
+  background: radial-gradient(
+    260px circle at var(--bento-x) var(--bento-y),
+    rgba(210, 232, 35, 0.24),
+    transparent 68%
+  );
+  border-radius: inherit;
+  content: "";
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 180ms ease;
+  z-index: 0;
+}
+
+.dashboard-bento-fx:hover::before {
+  opacity: 1;
+}
+
+.dashboard-bento-fx::after {
+  box-shadow:
+    inset 0 0 0 2px rgba(210, 232, 35, 0.24),
+    0 0 24px rgba(210, 232, 35, 0.16);
+}
+
+.dashboard-bento-ripple {
+  animation: dashboardBentoRipple 620ms ease-out forwards;
+  background: rgba(210, 232, 35, 0.42);
+  border-radius: 999px;
+  height: 10px;
+  pointer-events: none;
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0);
+  width: 10px;
+  z-index: 4;
+}
+
+@keyframes dashboardBentoRipple {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(34);
+  }
+}
+
+.stat-card strong,
+.stat-card h3,
+.stat-number,
+.admin-card-grid article strong,
+.admin-report-hero article strong,
+.admin-intelligence-grid article strong,
+.challan-stats-grid article strong,
+.traffic-command-stats article strong,
+.reports-card-grid article strong,
+.public-stat-card strong,
+.citizen-stat-card strong,
+.citizen-service-grid article strong,
+.citizen-command-deck article strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.stat-card,
+.admin-card-grid article,
+.admin-report-hero article,
+.admin-intelligence-grid article,
+.challan-stats-grid article,
+.traffic-command-stats article,
+.reports-card-grid article,
+.public-stat-card,
+.citizen-stat-card,
+.citizen-service-grid article,
+.citizen-command-deck article {
+  min-width: 0;
+}
+
+/* Balance the all-neon dashboard skin with white surfaces and safer corners. */
+.stat-card::after,
+.officer-quick-card::after,
+.command-signal-grid article::after,
+.admin-card-grid article::after,
+.admin-report-hero article::after,
+.admin-intelligence-grid article::after,
+.challan-stats-grid article::after,
+.traffic-command-stats article::after,
+.reports-card-grid article::after,
+.public-stat-card::after,
+.citizen-stat-card::after,
+.citizen-service-grid article::after,
+.citizen-command-deck article::after {
+  height: 44px !important;
+  right: -38px !important;
+  top: -18px !important;
+  transform: rotate(11deg) !important;
+  width: 118px !important;
+}
+
+.stat-card:nth-of-type(even),
+.officer-quick-card:nth-of-type(even),
+.command-signal-grid article:nth-of-type(even),
+.admin-card-grid article:nth-of-type(even),
+.admin-report-hero article:nth-of-type(even),
+.admin-intelligence-grid article:nth-of-type(even),
+.challan-stats-grid article:nth-of-type(even),
+.traffic-command-stats article:nth-of-type(even),
+.reports-card-grid article:nth-of-type(even),
+.public-stat-card:nth-of-type(even),
+.citizen-stat-card:nth-of-type(even),
+.citizen-service-grid article:nth-of-type(even),
+.citizen-command-deck article:nth-of-type(even) {
+  background:
+    radial-gradient(circle at 84% 18%, rgba(210, 232, 35, 0.28), transparent 24%),
+    linear-gradient(rgba(9, 9, 11, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.055) 1px, transparent 1px),
+    #fffdf4 !important;
+  background-size: auto, 24px 24px, 24px 24px, auto !important;
+  color: #09090B !important;
+}
+
+.stat-card:nth-of-type(even) h3,
+.stat-card:nth-of-type(even) .stat-number,
+.officer-quick-card:nth-of-type(even) strong,
+.command-signal-grid article:nth-of-type(even) strong,
+.admin-card-grid article:nth-of-type(even) strong,
+.admin-report-hero article:nth-of-type(even) strong,
+.admin-intelligence-grid article:nth-of-type(even) strong,
+.challan-stats-grid article:nth-of-type(even) strong,
+.traffic-command-stats article:nth-of-type(even) strong,
+.reports-card-grid article:nth-of-type(even) strong,
+.public-stat-card:nth-of-type(even) strong,
+.citizen-stat-card:nth-of-type(even) strong,
+.citizen-service-grid article:nth-of-type(even) strong,
+.citizen-command-deck article:nth-of-type(even) strong {
+  color: #09090B !important;
+  text-shadow: 3px 3px 0 rgba(210, 232, 35, 0.6) !important;
+}
+
+.stat-card:nth-of-type(even) span,
+.stat-card:nth-of-type(even) .stat-label,
+.officer-quick-card:nth-of-type(even) span,
+.command-signal-grid article:nth-of-type(even) span,
+.admin-card-grid article:nth-of-type(even) span,
+.admin-report-hero article:nth-of-type(even) span,
+.admin-intelligence-grid article:nth-of-type(even) span,
+.challan-stats-grid article:nth-of-type(even) span,
+.traffic-command-stats article:nth-of-type(even) span,
+.reports-card-grid article:nth-of-type(even) span,
+.public-stat-card:nth-of-type(even) span,
+.citizen-stat-card:nth-of-type(even) span,
+.citizen-service-grid article:nth-of-type(even) span,
+.citizen-command-deck article:nth-of-type(even) span {
+  color: #09090B !important;
+}
+
+.admin-card-grid article:nth-of-type(even) small,
+.admin-report-hero article:nth-of-type(even) small,
+.admin-intelligence-grid article:nth-of-type(even) small,
+.challan-stats-grid article:nth-of-type(even) small,
+.reports-card-grid article:nth-of-type(even) small,
+.public-stat-card:nth-of-type(even) p,
+.citizen-service-grid article:nth-of-type(even) small,
+.citizen-command-deck article:nth-of-type(even) small {
+  color: #4d4d48 !important;
+}
+
+.citizen-stat-card span,
+.public-stat-card span,
+.stat-card span,
+.stat-card .stat-label {
+  letter-spacing: 0 !important;
+  line-height: 1.05 !important;
+  max-width: calc(100% - 72px);
+}
+
+.citizen-stat-card strong,
+.public-stat-card strong,
+.stat-card .stat-number,
+.stat-card h3 {
+  line-height: 0.92 !important;
+}
+
+.citizen-stat-card.payable,
+.public-stat-card:nth-of-type(4n),
+.stat-card:nth-of-type(4n) {
+  background:
+    radial-gradient(circle at 74% 58%, rgba(210, 232, 35, 0.24), transparent 34%),
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    #D2E823 !important;
+  color: #09090B !important;
+}
+
+.citizen-stat-card.payable strong,
+.citizen-stat-card.payable span,
+.public-stat-card:nth-of-type(4n) strong,
+.public-stat-card:nth-of-type(4n) span,
+.stat-card:nth-of-type(4n) h3,
+.stat-card:nth-of-type(4n) .stat-number,
+.stat-card:nth-of-type(4n) .stat-label {
+  color: #09090B !important;
+  text-shadow: 3px 3px 0 rgba(255, 253, 244, 0.54) !important;
+}
+
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .dashboard-bento-fx::before,
+  .dashboard-bento-ripple {
+    display: none;
+  }
+}
+
+/* Dashboard-wide command chrome: lightweight, shared, and neon without WebGL. */
+.public-dashboard,
+.citizen-page,
+.officer-dashboard,
+.admin-page,
+.traffic-command-page,
+.challan-command-page,
+.reports-page {
+  isolation: isolate;
+  overflow-x: clip;
+  position: relative;
+}
+
+.dashboard-header,
+.admin-hero,
+.traffic-command-hero,
+.challan-hero,
+.reports-hero,
+.public-hero-copy,
+.public-status-board,
+.citizen-topbar,
+.citizen-auth-hero {
+  box-shadow:
+    10px 10px 0 #09090B,
+    0 0 0 1px rgba(210, 232, 35, 0.2),
+    0 0 34px rgba(210, 232, 35, 0.14) !important;
+}
+
+.dashboard-bento-fx {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.dashboard-bento-fx:hover {
+  filter: saturate(1.08);
+  transform: translate(-2px, -2px);
+}
+
+.admin-panel.dashboard-bento-fx,
+.reports-panel.dashboard-bento-fx,
+.challan-table-panel.dashboard-bento-fx,
+.challan-priority-panel.dashboard-bento-fx,
+.traffic-radar-panel.dashboard-bento-fx,
+.traffic-feed-panel.dashboard-bento-fx,
+.public-chart-panel.dashboard-bento-fx,
+.public-map-panel.dashboard-bento-fx,
+.public-alert-panel.dashboard-bento-fx,
+.citizen-panel.dashboard-bento-fx,
+.officer-appeals-panel.dashboard-bento-fx,
+.officer-activity-panel.dashboard-bento-fx,
+.officer-ai-fill.dashboard-bento-fx {
+  overflow: hidden;
+  position: relative;
+}
+
+.public-status-board.dashboard-bento-fx,
+.public-command-ribbon.dashboard-bento-fx,
+.city-pulse.dashboard-bento-fx,
+.citizen-service-score.dashboard-bento-fx {
+  overflow: hidden;
+  position: relative;
+}
+
+.admin-panel.dashboard-bento-fx::before,
+.reports-panel.dashboard-bento-fx::before,
+.challan-table-panel.dashboard-bento-fx::before,
+.challan-priority-panel.dashboard-bento-fx::before,
+.traffic-radar-panel.dashboard-bento-fx::before,
+.traffic-feed-panel.dashboard-bento-fx::before,
+.public-chart-panel.dashboard-bento-fx::before,
+.public-map-panel.dashboard-bento-fx::before,
+.public-alert-panel.dashboard-bento-fx::before,
+.citizen-panel.dashboard-bento-fx::before,
+.officer-appeals-panel.dashboard-bento-fx::before,
+.officer-activity-panel.dashboard-bento-fx::before,
+.officer-ai-fill.dashboard-bento-fx::before {
+  background:
+    radial-gradient(260px circle at var(--bento-x) var(--bento-y), rgba(248, 244, 232, 0.16), transparent 68%),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.16), transparent 34%, rgba(248, 244, 232, 0.12));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-bento-fx:hover {
+    transform: none;
+  }
+}
+
+/* Final balance pass: keep the original neon theme, but reduce harsh all-black/all-white blocks. */
+.home-page,
+.public-dashboard,
+.citizen-page,
+.admin-page,
+.officer-dashboard,
+.traffic-command-page,
+.challan-command-page,
+.reports-page {
+  padding-left: clamp(16px, 2.4vw, 34px) !important;
+  padding-right: clamp(16px, 2.4vw, 34px) !important;
+}
+
+.dashboard-header,
+.admin-hero,
+.traffic-command-hero,
+.challan-hero,
+.reports-hero,
+.public-hero-copy,
+.citizen-topbar,
+.citizen-auth-hero {
+  border: 3px solid #09090B !important;
+  box-shadow: 7px 7px 0 #09090B, 0 0 26px rgba(210, 232, 35, 0.12) !important;
+  padding: clamp(22px, 3.2vw, 38px) !important;
+}
+
+.stat-card,
+.command-signal-grid article,
+.admin-card-grid article,
+.admin-report-hero article,
+.admin-intelligence-grid article,
+.challan-stats-grid article,
+.traffic-command-stats article,
+.reports-card-grid article,
+.public-stat-card,
+.citizen-stat-card,
+.citizen-service-grid article,
+.citizen-command-deck article {
+  background:
+    radial-gradient(circle at 84% 16%, rgba(210, 232, 35, 0.22), transparent 24%),
+    linear-gradient(rgba(9, 9, 11, 0.048) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.048) 1px, transparent 1px),
+    #fffdf4 !important;
+  background-size: auto, 24px 24px, 24px 24px, auto !important;
+  border: 3px solid #09090B !important;
+  box-shadow: 6px 6px 0 #09090B !important;
+  color: #09090B !important;
+  padding: clamp(16px, 2vw, 22px) !important;
+}
+
+.stat-card:nth-of-type(3n + 1),
+.command-signal-grid article:nth-of-type(3n + 1),
+.admin-card-grid article:nth-of-type(3n + 1),
+.admin-report-hero article:nth-of-type(3n + 1),
+.admin-intelligence-grid article:nth-of-type(3n + 1),
+.challan-stats-grid article:nth-of-type(3n + 1),
+.traffic-command-stats article:nth-of-type(3n + 1),
+.reports-card-grid article:nth-of-type(3n + 1),
+.public-stat-card:nth-of-type(3n + 1),
+.citizen-stat-card:nth-of-type(3n + 1),
+.citizen-service-grid article:nth-of-type(3n + 1),
+.citizen-command-deck article:nth-of-type(3n + 1) {
+  background:
+    radial-gradient(circle at 74% 62%, rgba(210, 232, 35, 0.16), transparent 32%),
+    linear-gradient(rgba(210, 232, 35, 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.075) 1px, transparent 1px),
+    #09090B !important;
+  background-size: auto, 24px 24px, 24px 24px, auto !important;
+  color: #F8F4E8 !important;
+}
+
+.stat-card:nth-of-type(3n + 2),
+.command-signal-grid article:nth-of-type(3n + 2),
+.admin-card-grid article:nth-of-type(3n + 2),
+.admin-report-hero article:nth-of-type(3n + 2),
+.admin-intelligence-grid article:nth-of-type(3n + 2),
+.challan-stats-grid article:nth-of-type(3n + 2),
+.traffic-command-stats article:nth-of-type(3n + 2),
+.reports-card-grid article:nth-of-type(3n + 2),
+.public-stat-card:nth-of-type(3n + 2),
+.citizen-stat-card:nth-of-type(3n + 2),
+.citizen-service-grid article:nth-of-type(3n + 2),
+.citizen-command-deck article:nth-of-type(3n + 2) {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.065) 1px, transparent 1px),
+    #D2E823 !important;
+  background-size: 24px 24px !important;
+  color: #09090B !important;
+}
+
+.stat-card h3,
+.stat-card .stat-number,
+.command-signal-grid article strong,
+.admin-card-grid article strong,
+.admin-report-hero article strong,
+.admin-intelligence-grid article strong,
+.challan-stats-grid article strong,
+.traffic-command-stats article strong,
+.reports-card-grid article strong,
+.public-stat-card strong,
+.citizen-stat-card strong,
+.citizen-service-grid article strong,
+.citizen-command-deck article strong {
+  color: inherit !important;
+  text-shadow: 2px 2px 0 rgba(210, 232, 35, 0.28) !important;
+}
+
+.stat-card span,
+.stat-card .stat-label,
+.command-signal-grid article span,
+.admin-card-grid article span,
+.admin-report-hero article span,
+.admin-intelligence-grid article span,
+.challan-stats-grid article span,
+.traffic-command-stats article span,
+.reports-card-grid article span,
+.public-stat-card span,
+.citizen-stat-card span,
+.citizen-service-grid article span,
+.citizen-command-deck article span {
+  color: inherit !important;
+}
+
+.stat-card:nth-of-type(3n + 1) span,
+.command-signal-grid article:nth-of-type(3n + 1) span,
+.admin-card-grid article:nth-of-type(3n + 1) span,
+.admin-report-hero article:nth-of-type(3n + 1) span,
+.admin-intelligence-grid article:nth-of-type(3n + 1) span,
+.challan-stats-grid article:nth-of-type(3n + 1) span,
+.traffic-command-stats article:nth-of-type(3n + 1) span,
+.reports-card-grid article:nth-of-type(3n + 1) span,
+.public-stat-card:nth-of-type(3n + 1) span,
+.citizen-stat-card:nth-of-type(3n + 1) span,
+.citizen-service-grid article:nth-of-type(3n + 1) span,
+.citizen-command-deck article:nth-of-type(3n + 1) span {
+  color: #D2E823 !important;
+}
+
+.admin-panel,
+.reports-panel,
+.challan-table-panel,
+.challan-priority-panel,
+.traffic-radar-panel,
+.traffic-feed-panel,
+.public-chart-panel,
+.public-map-panel,
+.public-alert-panel,
+.citizen-panel,
+.officer-appeals-panel,
+.officer-activity-panel,
+.officer-ai-fill {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.04) 1px, transparent 1px),
+    #fffdf4 !important;
+  background-size: 24px 24px !important;
+  border: 3px solid #09090B !important;
+  box-shadow: 6px 6px 0 #09090B !important;
+  color: #09090B !important;
+  padding: clamp(18px, 2vw, 24px) !important;
+}
+
+.admin-panel h2,
+.admin-panel h3,
+.reports-panel h2,
+.reports-panel h3,
+.challan-table-panel h2,
+.challan-priority-panel h2,
+.traffic-radar-panel h2,
+.traffic-feed-panel h2,
+.public-chart-panel h2,
+.public-map-panel h2,
+.public-alert-panel h2,
+.citizen-panel h2,
+.citizen-panel h3,
+.officer-appeals-panel h2,
+.officer-activity-panel h2,
+.officer-ai-fill strong {
+  color: #09090B !important;
+}
+
+.admin-panel p,
+.reports-panel p,
+.challan-table-panel p,
+.challan-priority-panel p,
+.traffic-radar-panel p,
+.traffic-feed-panel p,
+.public-chart-panel p,
+.public-map-panel p,
+.public-alert-panel p,
+.citizen-panel p,
+.officer-appeals-panel p,
+.officer-activity-panel p,
+.officer-ai-fill p {
+  color: #4d4d48 !important;
+}
+
+.public-complaint-desk,
+.public-command-ribbon,
+.citizen-service-strip,
+.admin-intelligence-strip,
+.admin-command-strip,
+.officer-command-band {
+  box-shadow: 6px 6px 0 #09090B !important;
+}
+
+@media (max-width: 760px) {
+  .home-page,
+  .public-dashboard,
+  .citizen-page,
+  .admin-page,
+  .officer-dashboard,
+  .traffic-command-page,
+  .challan-command-page,
+  .reports-page {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background-size: 42px 42px !important;
+    font-size: 15px;
+  }
+
+  h1,
+  .page-title,
+  .hero-title {
+    font-size: clamp(2rem, 11vw, 3.4rem) !important;
+    line-height: 0.98 !important;
+    overflow-wrap: anywhere;
+  }
+
+  h2,
+  .section-title {
+    font-size: clamp(1.55rem, 8vw, 2.35rem) !important;
+    line-height: 1.02 !important;
+  }
+
+  .header,
+  .admin-panel,
+  .reports-panel,
+  .challan-table-panel,
+  .challan-priority-panel,
+  .traffic-radar-panel,
+  .traffic-feed-panel,
+  .public-chart-panel,
+  .public-map-panel,
+  .public-alert-panel,
+  .citizen-panel,
+  .officer-appeals-panel,
+  .officer-activity-panel,
+  .officer-ai-fill,
+  .public-complaint-desk,
+  .public-command-ribbon,
+  .citizen-service-strip,
+  .admin-intelligence-strip,
+  .admin-command-strip,
+  .officer-command-band {
+    border-width: 2px !important;
+    box-shadow: 3px 3px 0 #09090B !important;
+    padding: 14px !important;
+  }
+
+  .stat-card,
+  .command-signal-grid article,
+  .admin-card-grid article,
+  .admin-report-hero article,
+  .admin-intelligence-grid article,
+  .challan-stats-grid article,
+  .traffic-command-stats article,
+  .reports-card-grid article,
+  .public-stat-card,
+  .citizen-stat-card,
+  .citizen-service-grid article,
+  .citizen-command-deck article,
+  .officer-quick-card,
+  .tech-item {
+    border-width: 2px !important;
+    box-shadow: 3px 3px 0 #09090B !important;
+    min-height: auto !important;
+    padding: 14px !important;
+  }
+
+  .stat-card:hover,
+  .command-signal-grid article:hover,
+  .admin-card-grid article:hover,
+  .challan-stats-grid article:hover,
+  .traffic-command-stats article:hover,
+  .reports-card-grid article:hover,
+  .public-stat-card:hover,
+  .citizen-stat-card:hover,
+  .citizen-service-grid article:hover,
+  .officer-quick-card:hover {
+    transform: none !important;
+  }
+
+  .table-wrapper,
+  .challan-table-panel,
+  .admin-panel,
+  .reports-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  button,
+  .btn,
+  .nav-link,
+  input,
+  select,
+  textarea {
+    min-height: 40px;
+  }
+
+  html[data-tms-theme='night'] body,
+  html[data-tms-theme='clean'] body {
+    background-size: 42px 42px !important;
+  }
+}
+
+html[data-tms-theme='night'] body {
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.04) 1px, transparent 1px),
+    #0b0b0c !important;
+  background-size: 30px 30px !important;
+}
+
+html[data-tms-theme='night'] .header,
+html[data-tms-theme='night'] .dashboard-signal-rail,
+html[data-tms-theme='night'] .public-complaint-desk,
+html[data-tms-theme='night'] .admin-command-strip,
+html[data-tms-theme='night'] .citizen-service-strip,
+html[data-tms-theme='night'] .officer-command-band {
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    #09090B !important;
+  background-size: 24px 24px !important;
+  color: #F8F4E8 !important;
+}
+
+html[data-tms-theme='night'] .header .nav-link,
+html[data-tms-theme='night'] .global-search input,
+html[data-tms-theme='night'] .user-info {
+  background: #fffdf4 !important;
+}
+
+html[data-tms-theme='clean'] body {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    #fffdf4 !important;
+  background-size: 34px 34px !important;
+}
+
+html[data-tms-theme='clean'] .stat-card,
+html[data-tms-theme='clean'] .command-signal-grid article,
+html[data-tms-theme='clean'] .admin-card-grid article,
+html[data-tms-theme='clean'] .challan-stats-grid article,
+html[data-tms-theme='clean'] .traffic-command-stats article,
+html[data-tms-theme='clean'] .reports-card-grid article,
+html[data-tms-theme='clean'] .public-stat-card,
+html[data-tms-theme='clean'] .citizen-stat-card,
+html[data-tms-theme='clean'] .citizen-service-grid article,
+html[data-tms-theme='clean'] .citizen-command-deck article {
+  background:
+    linear-gradient(rgba(9, 9, 11, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.04) 1px, transparent 1px),
+    #fffdf4 !important;
+  background-size: 24px 24px !important;
+  color: #09090B !important;
+}
+
+@media (max-width: 640px) {
+  html[data-tms-theme='night'] body,
+  html[data-tms-theme='clean'] body {
+    background-size: 42px 42px !important;
+  }
+
+  .dashboard-header,
+  .admin-hero,
+  .traffic-command-hero,
+  .challan-hero,
+  .reports-hero,
+  .public-hero-copy,
+  .citizen-topbar,
+  .citizen-auth-hero {
+    border-width: 2px !important;
+    box-shadow: 3px 3px 0 #09090B !important;
+    padding: 16px !important;
+  }
+}
+
+/* ============================================================================
+   FINAL APP POLISH - SHARED FINISHING TOUCHES
+   ============================================================================ */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-padding-top: 92px;
+}
+
+body::before {
+  mix-blend-mode: multiply;
+}
+
+.main-content {
+  min-height: calc(100vh - 150px);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role='button']:focus-visible {
+  outline: 3px solid #38BDF8 !important;
+  outline-offset: 3px;
+}
+
+button,
+.btn,
+.nav-link,
+.tab-button,
+.public-btn {
+  touch-action: manipulation;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
+p,
+li,
+small,
+span,
+strong,
+button,
+input,
+textarea,
+select {
+  overflow-wrap: anywhere;
+}
+
+.leaflet-container,
+.mapboxgl-map,
+.public-map,
+.citizen-map-wrap,
+.traffic-map-container,
+.traffic-map-wrapper {
+  min-height: 280px;
+}
+
+.notification-panel,
+.global-search-results,
+.quick-dock-popover,
+.gemini-panel {
+  max-height: min(720px, calc(100vh - 96px));
+}
+
+.admin-history-table,
+.citizen-table-panel,
+.challan-table-panel,
+.reports-table,
+.violations-table,
+.data-table {
+  scrollbar-color: #D2E823 #09090B;
+}
+
+.admin-history-table table,
+.citizen-table-panel table,
+.challan-table-panel table,
+.reports-table table,
+.violations-table table,
+.data-table table {
+  min-width: 720px;
+}
+
+.loader-container {
+  background:
+    radial-gradient(circle at center, rgba(210, 232, 35, 0.22), transparent 320px),
+    #09090B;
+}
+
+.loader {
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px #D2E823, 6px 6px 0 rgba(210, 232, 35, 0.35);
+}
+
+@media (hover: none) {
+  .stat-card:hover,
+  .feature-card:hover,
+  .public-stat-card:hover,
+  .public-chart-panel:hover,
+  .public-map-panel:hover,
+  .public-alert-panel:hover,
+  .public-services article:hover,
+  .citizen-stat-card:hover,
+  .citizen-panel:hover,
+  .citizen-service-grid article:hover,
+  .admin-card-grid article:hover,
+  .admin-panel:hover,
+  .challan-stats-grid article:hover,
+  .traffic-command-stats article:hover,
+  .dashboard-bento-fx:hover {
+    filter: none !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html {
+    scroll-padding-top: 76px;
+  }
+
+  .notification-panel,
+  .global-search-results {
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body::before {
+    display: none;
+  }
+
+  .main-content {
+    min-height: calc(100vh - 124px);
+  }
+
+  .home-page,
+  .public-dashboard,
+  .citizen-page,
+  .admin-page,
+  .officer-dashboard,
+  .traffic-command-page,
+  .challan-command-page,
+  .reports-page,
+  .smart-features-page {
+    padding-bottom: 86px !important;
+    padding-left: max(12px, env(safe-area-inset-left)) !important;
+    padding-right: max(12px, env(safe-area-inset-right)) !important;
+  }
+
+  .hero-section,
+  .premium-capabilities-section,
+  .mission-control-section,
+  .showcase-section,
+  .tech-section,
+  .cta-section,
+  .public-section,
+  .citizen-section,
+  .admin-section,
+  .reports-section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .hero-actions,
+  .cta-actions,
+  .challan-hero-actions,
+  .traffic-hero-actions,
+  .admin-form-actions,
+  .reduction-actions {
+    gap: 8px !important;
+  }
+
+  .hero-actions > *,
+  .cta-actions > *,
+  .challan-hero-actions > *,
+  .traffic-hero-actions > *,
+  .admin-form-actions > * {
+    flex: 1 1 150px;
+  }
+
+  .leaflet-container,
+  .mapboxgl-map,
+  .public-map,
+  .citizen-map-wrap,
+  .traffic-map-container,
+  .traffic-map-wrapper {
+    min-height: 260px !important;
+  }
+
+  .notification-panel,
+  .global-search-results,
+  .quick-dock-popover,
+  .gemini-panel {
+    max-height: calc(100vh - 100px);
+  }
+
+  .admin-history-table table,
+  .citizen-table-panel table,
+  .challan-table-panel table,
+  .reports-table table,
+  .violations-table table,
+  .data-table table {
+    min-width: 620px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }

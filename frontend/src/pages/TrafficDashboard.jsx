@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import SlideDownText from '../components/common/SlideDownText';
+import AnimatedNumber from '../components/common/AnimatedNumber';
 import './TrafficDashboard.css';
 
 const LEVELS = ['Low', 'Medium', 'High', 'Critical'];
@@ -56,7 +58,7 @@ export default function TrafficDashboard() {
       <section className="traffic-command-hero">
         <div>
           <span>Road Situation Room</span>
-          <h1>Traffic Dashboard</h1>
+          <h1><SlideDownText text="Traffic Dashboard" /></h1>
           <p>Officer-facing overview of congestion levels, public alerts, and city movement pressure.</p>
         </div>
         <div className="traffic-hero-actions">
@@ -71,7 +73,7 @@ export default function TrafficDashboard() {
         {stats.map((stat) => (
           <article key={stat.label}>
             <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
+            <strong><AnimatedNumber value={stat.value} /></strong>
           </article>
         ))}
       </section>
@@ -99,7 +101,7 @@ export default function TrafficDashboard() {
                   <div key={level}>
                     <span>{level}</span>
                     <i style={{ width: `${Math.min(100, count * 22)}%`, backgroundColor: COLORS[level] }} />
-                    <strong>{count}</strong>
+                    <strong><AnimatedNumber value={count} /></strong>
                   </div>
                 );
               })}

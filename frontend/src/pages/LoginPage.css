@@ -4,7 +4,12 @@
 
 .login-container {
   min-height: 100vh;
-  background-color: var(--color-bg);
+  background:
+    radial-gradient(circle at 85% 12%, rgba(210, 232, 35, 0.28), transparent 260px),
+    linear-gradient(rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 11, 0.035) 1px, transparent 1px),
+    var(--color-bg);
+  background-size: auto, 34px 34px, 34px 34px, auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,17 +33,21 @@
    ============================================================================ */
 
 .login-brand-section {
-  background-color: var(--color-primary);
+  background:
+    linear-gradient(rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 232, 35, 0.08) 1px, transparent 1px),
+    var(--color-primary);
+  background-size: 26px 26px;
   color: var(--color-text-light);
   padding: var(--spacing-3xl);
   border: var(--border-size) solid var(--color-primary);
-  border-radius: var(--border-radius-lg);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 10px 10px 0 #D2E823;
 }
 
 .login-brand-section::before {
@@ -118,8 +127,17 @@
 }
 
 .feature-icon {
-  font-size: 1.5rem;
-  display: block;
+  align-items: center;
+  background: #D2E823;
+  border: 2px solid #F8F4E8;
+  border-radius: 8px;
+  color: #09090B;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  justify-content: center;
+  min-width: 46px;
+  padding: 6px 8px;
 }
 
 /* ============================================================================
@@ -136,6 +154,11 @@
 .form-container {
   width: 100%;
   max-width: 400px;
+  background: #fff;
+  border: 3px solid #09090B;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #09090B;
+  padding: 26px;
   animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
@@ -187,7 +210,16 @@
 }
 
 .error-icon {
-  font-size: 1.5rem;
+  align-items: center;
+  background: #FF3B3B;
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 900;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
 }
 
 /* ============================================================================
@@ -327,6 +359,19 @@
   left: 0;
 }
 
+.light-beam-button.btn-login::before {
+  display: none;
+}
+
+.light-beam-button.btn-login {
+  padding: 0 32px;
+}
+
+.light-beam-button .spinner {
+  border-color: rgba(248, 244, 232, 0.35);
+  border-top-color: #D2E823;
+}
+
 .spinner {
   display: inline-block;
   width: 16px;
@@ -385,7 +430,7 @@
    DEMO CREDENTIALS
    ============================================================================ */
 
-.demo-creds {
+.access-creds {
   background-color: rgba(210, 232, 35, 0.1);
   border: var(--border-size) solid var(--color-accent);
   border-radius: var(--border-radius);
@@ -395,12 +440,12 @@
   font-family: var(--font-mono);
 }
 
-.demo-creds p {
+.access-creds p {
   margin: var(--spacing-xs) 0;
   line-height: 1.4;
 }
 
-.demo-creds strong {
+.access-creds strong {
   color: var(--color-primary);
   font-weight: 700;
 }

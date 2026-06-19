@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { Environment, Html, Line, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import './TrafficScene3D.css';
 
 const roadMaterial = { color: '#151515', roughness: 0.82, metalness: 0.08 };
@@ -29,6 +29,32 @@ const ALERTS = [
   { position: [14, 1.2, 18], color: '#ff851b', label: 'MED' },
   { position: [28, 1.2, -10], color: '#85144b', label: 'CRIT' },
 ];
+
+const DEFAULT_OFFICERS = [
+  { id: 1, name: 'Shafiq Rana', lat: 24.8607, lng: 67.0011, assignedZone: 'Karachi Central' },
+  { id: 2, name: 'Ayesha Khan', lat: 24.8738, lng: 67.0321, assignedZone: 'Saddar' },
+  { id: 3, name: 'Bilal Ahmed', lat: 24.918, lng: 67.0971, assignedZone: 'Gulshan-e-Iqbal' },
+];
+
+const KARACHI_CENTER = { lat: 24.8607, lng: 67.0011 };
+const OFFICER_COLORS = ['#d2e823', '#38bdf8', '#ff851b', '#f472b6', '#34d399', '#a78bfa'];
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const getOfficerScenePosition = (officer, index) => {
+  const lat = Number(officer.lat ?? officer.latitude ?? KARACHI_CENTER.lat);
+  const lng = Number(officer.lng ?? officer.longitude ?? KARACHI_CENTER.lng);
+  const fallbackAngle = index * 2.1;
+  const fallbackRadius = 14 + index * 4;
+  const x = Number.isFinite(lng)
+    ? clamp((lng - KARACHI_CENTER.lng) * 620, -38, 38)
+    : Math.cos(fallbackAngle) * fallbackRadius;
+  const z = Number.isFinite(lat)
+    ? clamp((KARACHI_CENTER.lat - lat) * 620, -38, 38)
+    : Math.sin(fallbackAngle) * fallbackRadius;
+
+  return [x, 1.05, z];
+};
 
 const Building = ({ x, z, width, height, depth, color, index }) => {
   const windowRows = Math.max(2, Math.floor(height / 5));
@@ -173,7 +199,86 @@ const TrafficSignal = ({ position, green }) => (
   </group>
 );
 
-const CityScene = () => (
+const OfficerUnit = ({ officer, index }) => {
+  const group = useRef();
+  const ring = useRef();
+  const beacon = useRef();
+  const color = OFFICER_COLORS[index % OFFICER_COLORS.length];
+  const position = useMemo(() => getOfficerScenePosition(officer, index), [officer, index]);
+  const label = officer.name || `Officer ${index + 1}`;
+  const zone = officer.assignedZone || officer.zone || 'Patrol Unit';
+
+  useFrame(({ clock }) => {
+    const time = clock.getElapsedTime();
+    if (group.current) group.current.position.y = position[1] + Math.sin(time * 2 + index) * 0.12;
+    if (ring.current) {
+      const scale = 1.15 + Math.sin(time * 2.4 + index) * 0.08;
+      ring.current.scale.set(scale, scale, scale);
+      ring.current.rotation.z = time * 0.5;
+    }
+    if (beacon.current) beacon.current.rotation.y = time * 1.4;
+  });
+
+  return (
+    <group position={position}>
+      <Line points={[[0, -0.92, 0], [-position[0], -0.9, -position[2]]]} color={color} lineWidth={1.2} transparent opacity={0.48} />
+      <mesh ref={ring} position={[0, -0.82, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[2.15, 0.045, 8, 72]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.9} transparent opacity={0.72} />
+      </mesh>
+      <mesh position={[0, -0.8, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[3.1, 3.22, 72]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} transparent opacity={0.34} />
+      </mesh>
+      <group ref={group}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.8, 0.95, 0.42, 6]} />
+          <meshStandardMaterial color="#09090b" roughness={0.35} metalness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.45, 0]} castShadow>
+          <sphereGeometry args={[0.64, 24, 24]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.1} roughness={0.28} />
+        </mesh>
+        <mesh ref={beacon} position={[0, 1.1, 0]}>
+          <coneGeometry args={[0.34, 1.2, 24]} />
+          <meshStandardMaterial color="#f8f4e8" emissive={color} emissiveIntensity={0.85} transparent opacity={0.9} />
+        </mesh>
+        <pointLight color={color} intensity={1.8} distance={18} position={[0, 1.6, 0]} />
+        <Html center distanceFactor={18} position={[0, 2.55, 0]} className="officer-3d-label">
+          <strong>{label}</strong>
+          <span>{zone}</span>
+        </Html>
+      </group>
+    </group>
+  );
+};
+
+const CommandCore = ({ officerCount }) => {
+  const ref = useRef();
+
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.rotation.y = clock.getElapsedTime() * 0.45;
+  });
+
+  return (
+    <group position={[0, 1.35, 0]}>
+      <mesh castShadow>
+        <cylinderGeometry args={[2.2, 2.45, 1.2, 8]} />
+        <meshStandardMaterial color="#09090b" roughness={0.35} metalness={0.25} />
+      </mesh>
+      <mesh ref={ref} position={[0, 1.05, 0]}>
+        <torusGeometry args={[2.8, 0.05, 8, 96]} />
+        <meshStandardMaterial color="#d2e823" emissive="#d2e823" emissiveIntensity={1.1} />
+      </mesh>
+      <Html center distanceFactor={22} position={[0, 2.35, 0]} className="command-3d-label">
+        <strong>{officerCount}</strong>
+        <span>active officers</span>
+      </Html>
+    </group>
+  );
+};
+
+const CityScene = ({ officers }) => (
   <group rotation={[0, -0.15, 0]}>
     <mesh position={[0, -1, 0]} receiveShadow>
       <boxGeometry args={[96, 0.45, 96]} />
@@ -195,6 +300,7 @@ const CityScene = () => (
 
     <LaneMarkings />
     <RouteTrail />
+    <CommandCore officerCount={officers.length} />
 
     {BUILDINGS.map(([x, z, width, height, depth, color], index) => (
       <Building key={`${x}-${z}`} x={x} z={z} width={width} height={height} depth={depth} color={color} index={index} />
@@ -202,6 +308,7 @@ const CityScene = () => (
 
     {VEHICLES.map((vehicle, index) => <MovingVehicle key={index} {...vehicle} />)}
     {ALERTS.map((alert) => <AlertBeacon key={alert.label} {...alert} />)}
+    {officers.map((officer, index) => <OfficerUnit key={officer.id || officer.name || index} officer={officer} index={index} />)}
 
     <TrafficSignal position={[-7, 1.1, -7]} green />
     <TrafficSignal position={[7, 1.1, 7]} green={false} />
@@ -210,9 +317,14 @@ const CityScene = () => (
   </group>
 );
 
-const TrafficScene3D = () => (
+const TrafficScene3D = ({ officers = DEFAULT_OFFICERS }) => {
+  const officerUnits = (officers.length ? officers : DEFAULT_OFFICERS)
+    .filter((officer) => officer && (officer.name || officer.id))
+    .slice(0, 12);
+
+  return (
   <div className="traffic-scene-3d">
-    <Canvas shadows dpr={[1, 1.75]} gl={{ antialias: true }}>
+    <Canvas shadows dpr={[1, 1.75]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
       <PerspectiveCamera makeDefault position={[46, 34, 46]} fov={45} />
       <color attach="background" args={['#09090b']} />
       <fog attach="fog" args={['#09090b', 70, 135]} />
@@ -232,7 +344,7 @@ const TrafficScene3D = () => (
       />
       <pointLight position={[0, 12, 0]} color="#d2e823" intensity={1.1} distance={45} />
 
-      <CityScene />
+      <CityScene officers={officerUnits} />
       <Environment preset="city" />
 
       <OrbitControls
@@ -248,16 +360,17 @@ const TrafficScene3D = () => (
 
     <div className="scene-hud">
       <div>
-        <span>Live 3D Ops</span>
-        <strong>Karachi Grid</strong>
+        <span>Officer 3D Ops</span>
+        <strong>Live Patrol Grid</strong>
       </div>
       <ul>
-        <li><b>6</b> moving units</li>
+        <li><b>{officerUnits.length}</b> officers</li>
         <li><b>3</b> alert beacons</li>
-        <li><b>4</b> signal nodes</li>
+        <li><b>4</b> smart signals</li>
       </ul>
     </div>
   </div>
-);
+  );
+};
 
 export default TrafficScene3D;

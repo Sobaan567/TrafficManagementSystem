@@ -84,6 +84,67 @@
   font-size: 1.2rem;
 }
 
+.officer-3d-label,
+.command-3d-label {
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0);
+}
+
+.officer-3d-label {
+  background: rgba(9, 9, 11, 0.88);
+  border: 1px solid rgba(210, 232, 35, 0.82);
+  border-radius: 8px;
+  box-shadow: 0 0 18px rgba(210, 232, 35, 0.2);
+  color: #f8f4e8;
+  display: grid;
+  gap: 2px;
+  min-width: 112px;
+  padding: 7px 9px;
+  text-align: center;
+}
+
+.officer-3d-label strong,
+.command-3d-label strong {
+  color: #d2e823;
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.officer-3d-label span,
+.command-3d-label span {
+  color: #cfc9b8;
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.command-3d-label {
+  background: #d2e823;
+  border: 2px solid #09090b;
+  border-radius: 999px;
+  box-shadow: 4px 4px 0 rgba(9, 9, 11, 0.55);
+  min-width: 118px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.command-3d-label strong {
+  color: #09090b;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  line-height: 0.9;
+}
+
+.command-3d-label span {
+  color: #09090b;
+}
+
 /* ============================================================================
    RESPONSIVE DESIGN
    ============================================================================ */
@@ -104,5 +165,18 @@
 
   .scene-hud ul {
     justify-content: flex-start;
+  }
+
+  .officer-3d-label {
+    min-width: 92px;
+    padding: 6px 7px;
+  }
+
+  .officer-3d-label strong {
+    font-size: 0.62rem;
+  }
+
+  .officer-3d-label span {
+    display: none;
   }
 }

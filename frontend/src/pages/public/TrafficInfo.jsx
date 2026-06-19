@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GoogleMapReact from 'google-map-react';
 import api from '../../services/api';
+import SlideDownText from '../../components/common/SlideDownText';
 
 const LEVEL_COLORS = {
   Low: '#2ECC40',
@@ -56,6 +57,45 @@ const normalizeSituation = (s) => ({
   longitude: s.longitude ?? s.Longitude,
   reportedAt: s.reportedAt || s.ReportedAt || s.createdAt || s.CreatedAt
 });
+
+const TRAFFIC_INTELLIGENCE_SITUATIONS = [
+  {
+    locationName: 'Shahrah-e-Faisal',
+    cityName: 'Karachi',
+    description: 'Heavy office-hour congestion near the central corridor. Suggested diversion through Stadium Road.',
+    trafficLevel: 'High',
+    latitude: 24.8607,
+    longitude: 67.0011,
+    reportedAt: new Date().toISOString(),
+  },
+  {
+    locationName: 'M.A. Jinnah Road',
+    cityName: 'Karachi',
+    description: 'Slow movement after signal maintenance. Officers are managing lane flow manually.',
+    trafficLevel: 'Medium',
+    latitude: 24.8738,
+    longitude: 67.0321,
+    reportedAt: new Date(Date.now() - 18 * 60000).toISOString(),
+  },
+  {
+    locationName: 'University Road',
+    cityName: 'Karachi',
+    description: 'Critical bottleneck near intersection due to roadside incident. Avoid the area if possible.',
+    trafficLevel: 'Critical',
+    latitude: 24.9180,
+    longitude: 67.0971,
+    reportedAt: new Date(Date.now() - 7 * 60000).toISOString(),
+  },
+  {
+    locationName: 'Saddar',
+    cityName: 'Karachi',
+    description: 'Normal movement with light public transport pressure.',
+    trafficLevel: 'Low',
+    latitude: 24.8586,
+    longitude: 67.0281,
+    reportedAt: new Date(Date.now() - 32 * 60000).toISOString(),
+  },
+];
 
 const TrafficMarker = ({ situation }) => {
   const color = LEVEL_COLORS[situation.trafficLevel] || LEVEL_COLORS.Low;
@@ -157,6 +197,7 @@ export default function TrafficInfo() {
   const [situations, setSituations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [intelligenceMode, setIntelligenceMode] = useState(false);
 
   useEffect(() => { fetchSituations(); }, []);
 
@@ -167,6 +208,7 @@ export default function TrafficInfo() {
       const response = await api.get('/traffic/situations');
       if (response.data.success) {
         setSituations((response.data.data || []).map(normalizeSituation));
+        setIntelligenceMode(false);
       }
     } catch (err) {
       setError('Traffic server is not reachable right now. Please make sure the backend is running, then retry.');
@@ -175,21 +217,80 @@ export default function TrafficInfo() {
     }
   };
 
+  const loadTrafficIntelligence = () => {
+    setSituations(TRAFFIC_INTELLIGENCE_SITUATIONS);
+    setError('');
+    setLoading(false);
+    setIntelligenceMode(true);
+  };
+
+  const severityScore = situations.reduce((total, item) => {
+    const weight = { Low: 8, Medium: 18, High: 28, Critical: 40 }[item.trafficLevel] || 8;
+    return total + weight;
+  }, 0);
+
   return (
     <div style={{ padding: '30px 20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '8px', color: '#09090B' }}>Real-Time Traffic Information</h1>
+      <h1 style={{
+        color: '#09090B',
+        fontSize: 'clamp(2.35rem, 7vw, 5rem)',
+        lineHeight: 0.92,
+        marginBottom: '8px',
+        maxWidth: '980px'
+      }}>
+        <SlideDownText text="Real-Time Traffic Information" />
+      </h1>
       <p style={{ color: '#555', marginBottom: '30px' }}>Live traffic situations reported by traffic officers.</p>
 
-      <div style={{ backgroundColor: '#F8F4E8', padding: '20px', border: '2px solid #09090B', borderRadius: '8px', marginBottom: '30px' }}>
-        <h3 style={{ margin: '0 0 12px' }}>Traffic Level Legend</h3>
-        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-          {Object.entries(LEVEL_COLORS).map(([level, color]) => (
-            <div key={level} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '16px', height: '16px', backgroundColor: color, borderRadius: '50%', border: '1px solid #09090B' }} />
-              <span style={{ fontSize: '14px' }}>{level}</span>
-            </div>
-          ))}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) 260px',
+        gap: '18px',
+        marginBottom: '30px'
+      }}>
+        <div style={{ backgroundColor: '#F8F4E8', padding: '20px', border: '2px solid #09090B', borderRadius: '8px', boxShadow: '5px 5px 0 #09090B' }}>
+          <h3 style={{ margin: '0 0 12px' }}>Traffic Level Legend</h3>
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+            {Object.entries(LEVEL_COLORS).map(([level, color]) => (
+              <div key={level} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '16px', height: '16px', backgroundColor: color, borderRadius: '50%', border: '1px solid #09090B' }} />
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{level}</span>
+              </div>
+            ))}
+          </div>
+          {intelligenceMode && (
+            <p style={{ margin: '14px 0 0', fontWeight: 'bold' }}>Traffic intelligence is active with city congestion zones.</p>
+          )}
         </div>
+        <div style={{ backgroundColor: '#D2E823', padding: '20px', border: '2px solid #09090B', borderRadius: '8px', boxShadow: '5px 5px 0 #09090B' }}>
+          <span style={{ fontWeight: 900, textTransform: 'uppercase' }}>City Severity</span>
+          <h2 style={{ margin: '8px 0', fontSize: '38px' }}>{Math.min(100, severityScore)}</h2>
+          <button onClick={loadTrafficIntelligence} style={{ padding: '10px 14px', border: '2px solid #09090B', background: '#09090B', color: '#F8F4E8', fontWeight: 'bold', cursor: 'pointer' }}>
+            Traffic Intelligence
+          </button>
+        </div>
+      </div>
+
+      <div style={{
+        backgroundColor: '#09090B',
+        border: '3px solid #D2E823',
+        borderRadius: '8px',
+        boxShadow: '5px 5px 0 #D2E823',
+        color: '#F8F4E8',
+        display: 'grid',
+        gap: '10px',
+        gridTemplateColumns: 'minmax(0, 1fr) auto',
+        marginBottom: '30px',
+        padding: '18px'
+      }}>
+        <div>
+          <span style={{ color: '#D2E823', fontWeight: 900, textTransform: 'uppercase' }}>Emergency Corridor Advisory</span>
+          <h3 style={{ color: '#F8F4E8', margin: '6px 0' }}>Priority route monitoring available</h3>
+          <p style={{ color: '#d8d3c4', margin: 0, fontWeight: 800 }}>When a corridor is active, public users can avoid restricted roads and officers can prioritize movement.</p>
+        </div>
+        <button onClick={loadTrafficIntelligence} style={{ alignSelf: 'center', padding: '10px 14px', border: '2px solid #F8F4E8', background: '#D2E823', color: '#09090B', fontWeight: 'bold', cursor: 'pointer' }}>
+          Activate View
+        </button>
       </div>
 
       {loading ? (
@@ -200,6 +301,9 @@ export default function TrafficInfo() {
           <br />
           <button onClick={fetchSituations} style={{ marginTop: '12px', padding: '10px 18px', border: '2px solid #09090B', background: '#D2E823', fontWeight: 'bold', cursor: 'pointer' }}>
             Retry
+          </button>
+          <button onClick={loadTrafficIntelligence} style={{ marginTop: '12px', marginLeft: '10px', padding: '10px 18px', border: '2px solid #09090B', background: '#F8F4E8', fontWeight: 'bold', cursor: 'pointer' }}>
+            Open Traffic Intelligence
           </button>
         </div>
       ) : situations.length === 0 ? (
